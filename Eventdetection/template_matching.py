@@ -45,9 +45,8 @@ import pickle
 import sys
 from datetime import datetime
 
-import numpy as np
-
 import eventDTFuncs
+import numpy as np
 
 # add path that contains eventDTFuncs to scope of search
 sys.path.insert(0, "/u/st/by/aissah/scratch/summer2022exp/Eventdetection")
@@ -89,11 +88,11 @@ if compression_flag == 1:
     ]  #  COMPRESSION_FUNCTIONS shows compression types as keys. wl and wavelet are the same
     compression_func = sys.argv[
         8
-    ]  # String of the exact function to run to compress and reconstruct data. THe output of this should be formatted as (reconstructed_data, compression_factor). 
+    ]  # String of the exact function to run to compress and reconstruct data. THe output of this should be formatted as (reconstructed_data, compression_factor).
     # COMPRESSION_FUNCTIONS shows those used for our compression types.
     compression_levels = sys.argv[
         9
-    ]  # compression levels to be used separated by commas(,). Could be compression factors or whatever indicates level of compression for said compression type. 
+    ]  # compression levels to be used separated by commas(,). Could be compression factors or whatever indicates level of compression for said compression type.
     # COMPRESSION_LEVELS shows those used for our compression types.
 
     compression_levels = compression_levels.split(",")
@@ -148,7 +147,7 @@ def _get_mean_ccs(
     metadata=None,
 ):
     """
-    Internal function used to cross-correlate and find mean across channels either for just the uncompressed data or different 
+    Internal function used to cross-correlate and find mean across channels either for just the uncompressed data or different
     levels of compression for a compression type. Intended for data from one of several files.
 
     Parameters
@@ -268,7 +267,7 @@ start_time = datetime.now()
 if batch == 1:
     metadata["start_lag"] = 0
     first_file_time = data_files[0][-15:-3]
-    # start_time = "20" + first_file_time[:2] + "-" + first_file_time[2:4] + "-" + first_file_time[4:6] + "T" + 
+    # start_time = "20" + first_file_time[:2] + "-" + first_file_time[2:4] + "-" + first_file_time[4:6] + "T" +
     # first_file_time[6:8] + ":" + first_file_time[8:10] + ":" + first_file_time[10:]
     # metadata["start_time"] = np.datetime64(first_file_time)
     # datetime.datetime is able to handle milliseconds unlike np.datetime64

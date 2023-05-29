@@ -6,12 +6,9 @@ Created on Fri Oct  7 11:52:51 2022
 
 import h5py
 import numpy as np
-
-# import matplotlib.pyplot as plt
 import pywt
 import scipy.signal as ss
 import zfpy
-from numba import jit
 
 
 def loadtdms(
@@ -235,40 +232,7 @@ def compressReconstruct_wavelets(
         reconstructedData = reconstructedData[: len(data), : len(data[0])]
 
         return reconstructedData, compressionFactor
-        # for a in data:
-        # waveletCoefficients = pywt.wavedec(a, wavelet, level=lvl)
-        # allcoeffs, coeffs_slices, coeffs_shapes = pywt.ravel_coeffs(
-        #     waveletCoefficients, axes=None
-        # )
-        # thresheldCoefficients = pywt.threshold(
-        #     allcoeffs,
-        #     np.percentile(np.abs(allcoeffs), thresholdPercentile),
-        #     mode="hard",
-        # )
-        # thresheldCoefficients = pywt.unravel_coeffs(
-        #     thresheldCoefficients,
-        #     coeffs_slices,
-        #     coeffs_shapes,
-        #     output_format="wavedec",
-        # )
-        # reconstructedChannel = pywt.waverec(thresheldCoefficients, wavelet)
-        # reconstructedData = np.append(reconstructedData, reconstructedChannel)
-        # reconstructedData = np.append(
-        #    reconstructedData, np.array([reconstructedChannel]), axis=0
-        # )
 
-        ###
-        # thresheldCoefficients=thresholdWaveletCoefficients(waveletCoefficients, "1D", thresholdPercentile)
-
-        # reconstructedData=pywt.waverec(thresheldCoefficients,wavelet)
-        # return reconstructedData[1:]
-        ###
-        # return (
-        #    np.reshape(
-        #        reconstructedData, (len(data), int(len(reconstructedData) / len(data)))
-        #    ),
-        #    compressionFactor,
-        # )
     elif mode == "2D":
         waveletCoefficients = pywt.wavedec2(data, wavelet, level=lvl)
         # thresheldCoefficients = thresholdWaveletCoefficients(
@@ -294,7 +258,7 @@ def soft_threshold(wavelet_coeffs, threshold_percentile, mode="1d"):
     threshold_percentile : int
         percentile of coefficients to set to zero.
     mode : string optional
-        2d or 1d to indicate 2d or 1d wavelet decomposition coefficients in 
+        2d or 1d to indicate 2d or 1d wavelet decomposition coefficients in
         wavelet_coeffs respectively. The default is "1d".
 
     Returns
@@ -320,8 +284,12 @@ def soft_threshold(wavelet_coeffs, threshold_percentile, mode="1d"):
             all_coeffs = wavelet_coeffs[0]
             for a in range(1, len(wavelet_coeffs)):
                 all_coeffs = np.append(all_coeffs, wavelet_coeffs[a], axis=1)
-            thresholds = np.percentile(abs(all_coeffs), threshold_percentile, axis = 1)
-            thresheld_coeffs = [np.sign(level_coeffs) * np.maximum(np.abs(level_coeffs) - thresholds[:,np.newaxis], 0) for level_coeffs in wavelet_coeffs]
+            thresholds = np.percentile(abs(all_coeffs), threshold_percentile, axis=1)
+            thresheld_coeffs = [
+                np.sign(level_coeffs)
+                * np.maximum(np.abs(level_coeffs) - thresholds[:, np.newaxis], 0)
+                for level_coeffs in wavelet_coeffs
+            ]
         elif wavelet_coeffs[1].ndim == 1:
             # threshold each level and channel separately
             # thresheld_coeffs = []
@@ -337,7 +305,10 @@ def soft_threshold(wavelet_coeffs, threshold_percentile, mode="1d"):
             for a in range(1, len(wavelet_coeffs)):
                 all_coeffs = np.append(all_coeffs, wavelet_coeffs[a])
             threshold = np.percentile(abs(all_coeffs), threshold_percentile)
-            thresheld_coeffs = [np.sign(level_coeffs) * np.maximum(np.abs(level_coeffs) - threshold, 0) for level_coeffs in wavelet_coeffs]
+            thresheld_coeffs = [
+                np.sign(level_coeffs) * np.maximum(np.abs(level_coeffs) - threshold, 0)
+                for level_coeffs in wavelet_coeffs
+            ]
     elif mode == "2d":
         allcoeffs = wavelet_coeffs[0]
         for b in wavelet_coeffs[1:]:
@@ -372,7 +343,7 @@ def compressReconstruct_zfp(
 ):
     """
     Compress data with zfp and return reconstructed data.
-    
+
     Parameters
     ----------
     data : numpy array
@@ -620,7 +591,7 @@ def find_detection_significance(trace, peak_locations=[], whole_trace="yes"):
 
 def crosscorrelate_channels(signal, template, lagmax, stacked="yes"):
     """
-    Do a channel by channel normalized cross-correlation of template with a 
+    Do a channel by channel normalized cross-correlation of template with a
     signal up to a lag of lagmax
 
     Parameters
@@ -629,7 +600,7 @@ def crosscorrelate_channels(signal, template, lagmax, stacked="yes"):
         (channels by time_samples) array of signal.
     template : 2-dimensional numpy array
         (channels by time_samples) array of template. Number of channels should
-        be the same as that of signal and number of time samples should be at 
+        be the same as that of signal and number of time samples should be at
         least that of signal.
     lagmax : int
         Number of lags to do normalized cross-correlation at.
@@ -659,6 +630,7 @@ def crosscorrelate_channels(signal, template, lagmax, stacked="yes"):
         cross_correlations = np.mean(cross_correlations, axis=0)
     return cross_correlations
 
+
 def thresholdWaveletCoefficients(waveletCoefficients, mode, thresholdPercentile):
     """
     Soft thresholding operator on wavelet_coeffs. Initial version.
@@ -668,7 +640,7 @@ def thresholdWaveletCoefficients(waveletCoefficients, mode, thresholdPercentile)
     waveletCoefficients : tuple
         wavelet coefficients obtained by using pywavelets to decompose data.
     mode : string
-        2d or 1d to indicate 2d or 1d wavelet decomposition coefficients in 
+        2d or 1d to indicate 2d or 1d wavelet decomposition coefficients in
         wavelet_coeffs respectively. The default is "1d".
     threshold_percentile : int
         percentile of coefficients to set to zero.
@@ -677,7 +649,7 @@ def thresholdWaveletCoefficients(waveletCoefficients, mode, thresholdPercentile)
     -------
     thresheldCoefficients : tuple
         Coefficients after thrsholding.
-        
+
     """
     if mode == "1D":
         for a in range(len(waveletCoefficients[1])):
