@@ -17,9 +17,8 @@ import pickle
 import random
 import sys
 
-import numpy as np
-
 import ATFuncs
+import numpy as np
 
 # import random
 

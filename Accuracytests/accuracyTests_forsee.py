@@ -17,9 +17,8 @@ sys.path.insert(0, "/u/st/by/aissah/scratch/summer2022exp/Accuracytests")
 import os
 import pickle
 
-import numpy as np
-
 import ATFuncs
+import numpy as np
 
 basepath = "/beegfs/projects/martin/foresee/apr10_20"  # directory containing data
 # files

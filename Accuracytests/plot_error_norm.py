@@ -7,10 +7,9 @@ Created on Tue Sep 27 09:36:12 2022
 import os
 import pickle
 
+import ATFuncs
 import matplotlib.pyplot as plt
 import numpy as np
-
-import ATFuncs
 
 thresholds = list(range(5, 95, 5)) + list(range(92, 100, 2))
 

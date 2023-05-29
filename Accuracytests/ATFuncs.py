@@ -231,8 +231,12 @@ def soft_threshold(wavelet_coeffs, threshold_percentile, mode="1d"):
             all_coeffs = wavelet_coeffs[0]
             for a in range(1, len(wavelet_coeffs)):
                 all_coeffs = np.append(all_coeffs, wavelet_coeffs[a], axis=1)
-            thresholds = np.percentile(abs(all_coeffs), threshold_percentile, axis = 1)
-            thresheld_coeffs = [np.sign(level_coeffs) * np.maximum(np.abs(level_coeffs) - thresholds[:,np.newaxis], 0) for level_coeffs in wavelet_coeffs]
+            thresholds = np.percentile(abs(all_coeffs), threshold_percentile, axis=1)
+            thresheld_coeffs = [
+                np.sign(level_coeffs)
+                * np.maximum(np.abs(level_coeffs) - thresholds[:, np.newaxis], 0)
+                for level_coeffs in wavelet_coeffs
+            ]
         elif wavelet_coeffs[1].ndim == 1:
             # threshold each level and channel separately
             # thresheld_coeffs = []
@@ -248,7 +252,10 @@ def soft_threshold(wavelet_coeffs, threshold_percentile, mode="1d"):
             for a in range(1, len(wavelet_coeffs)):
                 all_coeffs = np.append(all_coeffs, wavelet_coeffs[a])
             threshold = np.percentile(abs(all_coeffs), threshold_percentile)
-            thresheld_coeffs = [np.sign(level_coeffs) * np.maximum(np.abs(level_coeffs) - threshold, 0) for level_coeffs in wavelet_coeffs]
+            thresheld_coeffs = [
+                np.sign(level_coeffs) * np.maximum(np.abs(level_coeffs) - threshold, 0)
+                for level_coeffs in wavelet_coeffs
+            ]
     elif mode == "2d":
         if len(wavelet_coeffs[0]) == 1:
             thresheld_coeffs = [wavelet_coeffs[0], wavelet_coeffs[1]]

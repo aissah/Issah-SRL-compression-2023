@@ -29,9 +29,8 @@ import pickle
 import sys
 from pathlib import Path
 
-import numpy as np
-
 import eventDTFuncs
+import numpy as np
 
 # location of files produced by runnig template_matching.py
 cc_location = Path("/u/st/by/aissah/scratch/event_detection/template_matching")
