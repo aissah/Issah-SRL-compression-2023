@@ -111,6 +111,7 @@ data_basepath = "/beegfs/projects/martin/BradyHotspring"  # "D:/CSM/Mines_Resear
 # files = os.listdir(data_basepath)
 save_location = "/u/st/by/aissah/scratch/event_detection/template_matching"  # "D:/CSM/Mines_Research/Test_data/"
 
+# build up collection of templates across channels
 if event_id == 2201050:
     template, _ = eventDTFuncs.loadBradyHShdf5(
         data_basepath + "/03_14_2016/PoroTomo_iDAS16043_160314083848.h5",
@@ -298,7 +299,7 @@ if batch == 1:
         metadata=metadata,
     )
 
-else:
+else: # with more batches, append end of previous file for continuity
     try:
         data_files = data_files[(batch - 1) * batch_size - 1 : batch * batch_size]
         metadata["files"] = [a[-15:-3] for a in data_files]

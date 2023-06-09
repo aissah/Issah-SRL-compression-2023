@@ -413,12 +413,14 @@ def get_peaks(trace, threshold=9, min_distance_btn_peaks=3000):
             neighbors = []
             neighbor_locations = []
             try:
-                while detection_significance[a] < threshold:
+                while detection_significance[a] < threshold: # if below threshold, iterate until you get to an event
                     a += 1
-                while trace[a] > trace[a - 1]:
-                    neighbors.append(trace[a])
+                # now you should be at a potential event
+                while trace[a] > trace[a - 1]: # track number of time samples increasing in significance
+                    neighbors.append(trace[a]) 
                     neighbor_locations.append(a)
                     a += 1
+                # if first peak event or long time since last event, record this event
                 if len(peaks) == 0 or a - peak_locations[-1] > min_distance_btn_peaks:
                     peaks.append(trace[a - 1])
                     peak_locations.append(a - 1)
@@ -499,10 +501,10 @@ def find_detection_significance(trace, peak_locations=[], whole_trace="yes"):
 
     median = np.median(trace)
     median_absolute_dev = np.median(abs(trace - median))
-    if whole_trace == "yes":
+    if whole_trace == "yes": # use whole trace for detection significance
         dectection_significance = (trace - median) / median_absolute_dev
         return dectection_significance
-    else:
+    else: # just use indices of peak_locations for detection significance
         detection_significance = []
         for a in peak_locations:
             detection_significance.append((trace[a] - median) / median_absolute_dev)
@@ -537,8 +539,9 @@ def crosscorrelate_channels(signal, template, lagmax, stacked="yes"):
     # lag_zero = len(template[1]) - 1
     number_of_channels, len_template = template.shape
     cross_correlations = np.empty((number_of_channels, lagmax + 1))
+    # parts of normalization factors
     template_autocc = np.sum(template * template, axis=1)
-    signal_squared = signal**2
+    signal_squared = signal**2 # 
     template_ones = np.ones(len_template)
     for a in range(number_of_channels):
         one_channel_cc = ss.correlate(signal[a], template[a], mode="valid")

@@ -48,13 +48,13 @@ basepath = "D:\\CSM\\Mines_Research\\Test_data\\FORESEE_Aug"  # data location
 # entries = os.listdir("D:\\CSM\\Mines_Research\\Test_data\\FORESEE_Aug")  # data location
 
 window = 5
-tolerance = 0.2
-precision = 4
-bitrate = 4
-threshold1 = 95
-threshold2 = 95
-svd_comp_factor = 20
-samplingFrequency = 125
+tolerance = 0.2         # tolerance for zfp compression
+precision = 4           # precision for zfp compression
+bitrate = 4             # bitrate for zfp compression
+threshold1 = 95         # percentile for 1D wavelet thresholding
+threshold2 = 95         # percentile for 2D wavelet thresholding
+svd_comp_factor = 20    # compression factor for SVD
+samplingFrequency = 125 # sampling frequency of data 
 
 flag = 1
 count = 0
@@ -88,6 +88,7 @@ for b in files:
             # )
             # windowedNormalisedErrors_tolerance = windowedNormalisedError_tolerance
 
+            # zfp error analysis
             compresseddata_lossy = zfpy.compress_numpy(data, precision=precision)
             decompresseddata_lossy = zfpy.decompress_numpy(compresseddata_lossy)
             windowedpowerspectrum, _ = windowedPowerSpectrum(
@@ -110,6 +111,7 @@ for b in files:
             # )
             # windowedNormalisedErrors_bitrate = windowedNormalisedError_bitrate
 
+            # 1D wavelet error analysis
             decompresseddata = soft_comp_decomp1d(
                 data, lvl=5, comp_ratio=threshold1
             )
@@ -119,9 +121,10 @@ for b in files:
             windowedpowerspectra_1dw = windowedpowerspectrum
             windowedNormalisedError_1dw = windowedNormalisedErrors(
                 data, decompresseddata, samplingFrequency, window, axis=1
-            )
+            ) 
             windowedNormalisedErrors_1dw = windowedNormalisedError_1dw
 
+            # 2D wavelet error analysis
             decompresseddata = soft_comp_decomp2d(
                 data, lvl=5, comp_ratio=threshold2
             )
@@ -134,6 +137,7 @@ for b in files:
             )
             windowedNormalisedErrors_2dw = windowedNormalisedError_2dw
 
+            # randomized SVD error analysis
             decompresseddata = randomized_SVD_comp_decomp(data, svd_comp_factor)
             windowedpowerspectrum, _ = windowedPowerSpectrum(
                 decompresseddata, samplingFrequency, windowlength=window
@@ -173,6 +177,7 @@ for b in files:
             #     axis=1,
             # )
 
+            # zfp compression analysis of errors in windowed spectrum
             compresseddata_lossy = zfpy.compress_numpy(data, precision=precision)
             decompresseddata_lossy = zfpy.decompress_numpy(compresseddata_lossy)
             windowedpowerspectrum, _ = windowedPowerSpectrum(
@@ -207,6 +212,7 @@ for b in files:
             #     axis=1,
             # )
 
+            # 1d wavelet compression analysis of errors in windowed spectrum
             decompresseddata = soft_comp_decomp1d(
                 data, lvl=5, comp_ratio=threshold1
             )
@@ -223,6 +229,7 @@ for b in files:
                 windowedNormalisedErrors_1dw, windowedNormalisedError_1dw, axis=1
             )
 
+            # 2d wavelet compression analysis of errors in windowed spectrum
             decompresseddata = soft_comp_decomp2d(
                 data, lvl=5, comp_ratio=threshold2
             )
@@ -239,6 +246,7 @@ for b in files:
                 windowedNormalisedErrors_2dw, windowedNormalisedError_2dw, axis=1
             )
 
+            # SVD compression analysis of errors in windowed spectrum
             decompresseddata = randomized_SVD_comp_decomp(data, svd_comp_factor)
             windowedpowerspectrum, _ = windowedPowerSpectrum(
                 decompresseddata, samplingFrequency, windowlength=window
@@ -256,6 +264,7 @@ for b in files:
             endtime = datetime.utcfromtimestamp(int(timestamps[-1]))
             # endtime = np.datetime64(endtime) + np.timedelta64(60, "s")
 
+# write results of power spectra, frequencies, and errors for each compression scheme
 with open(
     "windowedpowerspectra_originalFrequencies.pkl", "wb"
 ) as f:  # Python 3: open(..., 'wb')
@@ -278,6 +287,7 @@ with open("windowedpowerspectra_svd.pkl", "wb") as f:  # Python 3: open(..., 'wb
 #     #e, n, te, rs_1dw,rs_2dw = pickle.load(f)
 
 
+# read results and make plots of errors
 if True:
     with open("windowedpowerspectra_originalFrequencies.pkl", "rb") as f:
         [stackedData, windowedpowerspectra_original, frequencies] = pickle.load(f)
@@ -327,19 +337,19 @@ ax.yaxis_date()
 plt.savefig("Stacked_data.png", bbox_inches="tight")
 
 
-# Calculate averages across frequencies
+# Calculate averages of spectral ratios across frequencies
 weightedaverageratios_freqp = multweigthedAverageRatio(
     windowedpowerspectra_original, windowedpowerspectra_precision, axis=2
-)
+) # zfp
 weightedaverageratios_freq1dw = multweigthedAverageRatio(
     windowedpowerspectra_original, windowedpowerspectra_1dw, axis=2
-)
+) # 1d wavelet
 weightedaverageratios_freq2dw = multweigthedAverageRatio(
     windowedpowerspectra_original, windowedpowerspectra_2dw, axis=2
-)
+) # 2d wavelet
 weightedaverageratios_freqsvd = multweigthedAverageRatio(
     windowedpowerspectra_original, windowedpowerspectra_svd, axis=2
-)
+) # SVD
 
 # Plot averages across frequencies
 mini = 1.1
@@ -411,16 +421,16 @@ plotsaveimshow(
 # Calculate averages across time windows
 weightedaverageratios_twinp = multweigthedAverageRatio(
     windowedpowerspectra_original, windowedpowerspectra_precision, axis=0
-)
+) # zfp
 weightedaverageratios_twin1dw = multweigthedAverageRatio(
     windowedpowerspectra_original, windowedpowerspectra_1dw, axis=0
-)
+) # 1d wavelet
 weightedaverageratios_twin2dw = multweigthedAverageRatio(
     windowedpowerspectra_original, windowedpowerspectra_2dw, axis=0
-)
+) # 2d wavelet
 weightedaverageratios_twinsvd = multweigthedAverageRatio(
     windowedpowerspectra_original, windowedpowerspectra_svd, axis=0
-)
+) # SVD
 
 
 # Calculate averages across time windows
@@ -488,16 +498,16 @@ plotsaveimshow(
 # Calculate averages across channels
 weightedaverageratios_channelsp = multweigthedAverageRatio(
     windowedpowerspectra_original, windowedpowerspectra_precision, axis=1
-)
+) # zfp
 weightedaverageratios_channels1dw = multweigthedAverageRatio(
     windowedpowerspectra_original, windowedpowerspectra_1dw, axis=1
-)
+) # 1d wavelet
 weightedaverageratios_channels2dw = multweigthedAverageRatio(
     windowedpowerspectra_original, windowedpowerspectra_2dw, axis=1
-)
+) # 2d wavelet
 weightedaverageratios_channelssvd = multweigthedAverageRatio(
     windowedpowerspectra_original, windowedpowerspectra_svd, axis=1
-)
+) # SVD
 
 
 # Plot averages across channels

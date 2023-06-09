@@ -24,14 +24,14 @@ import numpy as np
 
 sys.path.insert(0, "/u/st/by/aissah/scratch/summer2022exp/Accuracytests")
 
-selectionsize = int(sys.argv[1])
-groups = int(sys.argv[2])
-batch = int(sys.argv[3])
-compression_type = sys.argv[4]  # "wavelet"
-flag = int(sys.argv[5])
+selectionsize = int(sys.argv[1]) # number of files for this batch to analyze
+groups = int(sys.argv[2])        # number of groups
+batch = int(sys.argv[3])         # batch ID (e.g. if 4 tasks, job sub. script sets this to 1, 2, 3, or 4)
+compression_type = sys.argv[4]   # "wavelet", "zfp", "svd"
+flag = int(sys.argv[5])          # 1=from beginning, 2=start from checkpoint
 
 data_basepath = "/beegfs/projects/martin/BradyHotspring"  # directory containing data
-# files
+# make list of all files in directory
 data_files = []
 for dir_path, dir_names, file_names in os.walk(data_basepath):
     dir_names.sort()
@@ -43,15 +43,15 @@ for dir_path, dir_names, file_names in os.walk(data_basepath):
             if ".h5" in file_name
         ]
     )
-numberoffiles = len(data_files)
+numberoffiles = len(data_files)  
 batch_size = np.ceil(numberoffiles / groups)
 end = int(batch_size * batch)
 start = int(end - batch_size)
 if end > numberoffiles:
     end = numberoffiles
+# select random subset of file indices for this batch to analyze
 selection = random.sample(range(start, end), int(selectionsize / groups))
-# selection = range(start, end)
-
+#selection = range(start, end)
 
 saveLocation = "/u/st/by/aissah/scratch/BradyHotspringResults/accuracyTests/"
 # errors_filename=saveLocation + 'errorsTolPrecBit1d2d_batch' + str(batch) + '.pkl'
@@ -98,13 +98,13 @@ for b in selection:
         if len(data) % 2 == 1:
             data = data[:-1]
 
-        if compression_type == "wavelet":
+        if compression_type == "wavelet":  # run 1D then 2D wavelet tests
             error1d, _ = ATFuncs.accracyTest_wavelet(
                 data, mode="1d", threshold_percentiles=thresholds
-            )
+            ) 
             error2d, _ = ATFuncs.accracyTest_wavelet(
                 data, mode="2d", threshold_percentiles=thresholds
-            )
+            ) 
             if flag == 1:
                 errors_1dw = np.array([error1d])
                 errors_2dw = np.array([error2d])
@@ -112,7 +112,7 @@ for b in selection:
             else:
                 errors_1dw = np.append(errors_1dw, np.array([error1d]), axis=0)
                 errors_2dw = np.append(errors_2dw, np.array([error2d]), axis=0)
-        elif compression_type == "zfp":
+        elif compression_type == "zfp":  # run zfp tests with 3 types of accuracy
             errort, compressionfactort = ATFuncs.accuracyTest_zfp(
                 data, mode="tolerance"
             )
@@ -145,7 +145,7 @@ for b in selection:
                 compressionfactors_bitrate = np.append(
                     compressionfactors_bitrate, np.array([compressionfactorb]), axis=0
                 )
-        elif compression_type == "svd":
+        elif compression_type == "svd":  # run SVD tests (with randomized SVD)
             errorSVD = ATFuncs.normalised_errors_SVD(
                 data, comp_factors_svd, mode="randomized"
             )
@@ -157,7 +157,9 @@ for b in selection:
         else:
             raise Exception("Unrecognised compression type")
 
-        if (count - start) % 200 == 0:
+        # record results every 200 files
+        # with errors recorded as arrays according to the compression types' options
+        if (count - start) % 200 == 0:  
             errorsFilename = (
                 saveLocation
                 + "errors/"

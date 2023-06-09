@@ -73,7 +73,7 @@ def loadBradyHShdf5(file, normalize="yes"):
         med = np.median(data, axis=0)
         for i in range(nSamples):
             data[:, i] = data[:, i] - med[i]
-
+        # normalize each row by its L1 norm 
         max_of_rows = abs(data[:, :]).sum(axis=1)
         data = data / max_of_rows[:, np.newaxis]
     return data, timestamp_arr
@@ -81,7 +81,7 @@ def loadBradyHShdf5(file, normalize="yes"):
 
 def accuracyTest_zfp(data, mode):
     """
-    Calculates frobenius norm of noise introduced by compression and various
+    Calculates Frobenius norm of noise introduced by compression and various
     levels (hardwired) of compression.
 
     Parameters
@@ -100,6 +100,7 @@ def accuracyTest_zfp(data, mode):
         Compression factor at each level of compression.
 
     """
+    # Lossless compression check 
     compressed_data_lossless = zfpy.compress_numpy(data)
     lossless_size = len(compressed_data_lossless)
     decompressed_array_lossless = zfpy.decompress_numpy(compressed_data_lossless)
@@ -111,7 +112,7 @@ def accuracyTest_zfp(data, mode):
     sizes = []
     errors = []
     if mode == "tolerance":
-        tolerances = np.logspace(3, -5, 20)
+        tolerances = np.logspace(3, -5, 20) # multiple tolerance factors to check relative error
         for tol in tolerances:
             compressed_data_lossy = zfpy.compress_numpy(data, tolerance=tol)
             size = len(compressed_data_lossy)
@@ -123,7 +124,7 @@ def accuracyTest_zfp(data, mode):
         errors.append(lossless_error)
         compressionfactors = [datasize / a for a in sizes]
     elif mode == "precision":
-        precisions = np.linspace(3, 16, 14)
+        precisions = np.linspace(3, 16, 14) # multiple precision levels to check relative error
         for prec in precisions:
             compressed_data_lossy = zfpy.compress_numpy(data, precision=prec)
             size = len(compressed_data_lossy)
@@ -136,7 +137,7 @@ def accuracyTest_zfp(data, mode):
         compressionfactors = [datasize / a for a in sizes]
 
     elif mode == "bitrate":
-        bitrates = np.linspace(1, 16, 16)
+        bitrates = np.linspace(1, 16, 16) # multiple bitrate levels to check relative errors
         for bitrate in bitrates:
             compressed_data_lossy = zfpy.compress_numpy(data, rate=bitrate)
             size = len(compressed_data_lossy)
@@ -152,7 +153,7 @@ def accuracyTest_zfp(data, mode):
 
 def accracyTest_wavelet(data, mode, threshold_percentiles=list(range(5, 95, 5))):
     """
-    Calculates frobenius norm of noise introduced by compression and various
+    Calculates Frobenius norm of noise introduced by compression and various
     levels of compression.
 
     Parameters
@@ -178,6 +179,7 @@ def accracyTest_wavelet(data, mode, threshold_percentiles=list(range(5, 95, 5)))
     if mode == "1d":
         coeffs = pywt.wavedec(data, "db5", level=level)
         for threshold in threshold_percentiles:
+            # sparse wavelet compressed version at threshold, then check reconstruction error
             thresheld_coeffs = soft_threshold(coeffs, threshold, mode="1d")
             decompresseddata = pywt.waverec(thresheld_coeffs, "db5")
             # decompresseddata = soft_comp_decomp1d(data, lvl=5, comp_ratio=threshold)
@@ -186,6 +188,7 @@ def accracyTest_wavelet(data, mode, threshold_percentiles=list(range(5, 95, 5)))
     elif mode == "2d":
         coeffs = pywt.wavedec2(data, "db5", level=level)
         for threshold in threshold_percentiles:
+            # sparse wavelet compressed version at threshold, then check reconstruction error
             thresheld_coeffs = soft_threshold(coeffs, threshold, mode="2d")
             decompresseddata = pywt.waverec2(thresheld_coeffs, "db5")
             # decompresseddata = soft_comp_decomp2d(data, lvl=5, comp_ratio=threshold)
@@ -270,7 +273,8 @@ def soft_threshold(wavelet_coeffs, threshold_percentile, mode="1d"):
                 * np.maximum(np.abs(wavelet_coeffs[0]) - threshold, 0)
             ]
             next_level = 1
-        for level_coeffs in wavelet_coeffs[next_level:]:
+        # for each level, set the threshold based on percentile at that level
+        for level_coeffs in wavelet_coeffs[next_level:]: 
             threshold = np.percentile(
                 abs(np.concatenate(level_coeffs)), threshold_percentile
             )
@@ -304,10 +308,11 @@ def compDecompSVD(data, compFactor):
 
     """
     import scipy.linalg as la
-
+    # factorization
     rows, columns = data.shape
     approxRank = int((rows * columns) / (compFactor * (rows + columns)))
     U, S, Vt = la.svd(data)
+    # reconstruction with low rank approximation
     sv = np.dot(np.diag(S[:approxRank]), Vt[:approxRank, :])
     recon = np.dot(U[:, :approxRank], sv)
     return recon
@@ -338,14 +343,14 @@ def partition_compDecompSVD(data, compFactor, min_ncols):
     ncols = len(data[0])
     partition_start = 0
     partition_end = min(min_ncols, ncols)
-    if (partition_end + min_ncols) > ncols:
+    if (partition_end + min_ncols) > ncols: # just 1 patch of data
         reconstructed_data = compDecompSVD(data[:, partition_start:], compFactor)
         flag = 0
-    else:
+    else: # grab a smaller subset of the data
         reconstructed_data = compDecompSVD(
             data[:, partition_start:partition_end], compFactor
         )
-    while flag == 1:
+    while flag == 1: # loop through smaller subsets of the data until all patches decomposed
         partition_start = partition_end
         partition_end = min(partition_end + min_ncols, ncols)
         if (partition_end + min_ncols) > ncols:
@@ -355,7 +360,7 @@ def partition_compDecompSVD(data, compFactor, min_ncols):
                 axis=1,
             )
             flag = 0
-        else:
+        else: 
             reconstructed_data = np.append(
                 reconstructed_data,
                 compDecompSVD(data[:, partition_start:partition_end], compFactor),
@@ -419,11 +424,10 @@ def randomized_SVD_comp_decomp(data, compFactor):
 
     rows, columns = data.shape
     approxRank = int((rows * columns) / (compFactor * (rows + columns)))
-    # U, S, Vt = la.svd(data)
+    # calculate randomized SVD and reconstruct
     U, S, Vt = randomized_svd(data, n_components=approxRank)
     recon = U @ np.diag(S) @ Vt
-    # sv = np.dot(np.diag(S), Vt)
-    # recon = np.dot(U, sv)
+
     return recon
 
 
@@ -451,20 +455,22 @@ def normalised_errors_SVD(data, compFactors, mode="randomized"):
     import scipy.linalg as la
     from sklearn.utils.extmath import randomized_svd
 
+    # approximate rank from dimension and desired compression factor
     rows, columns = data.shape
     approx_ranks = [
         int((rows * columns) / (compFactor * (rows + columns)))
         for compFactor in compFactors
     ]
+
     datanorm = np.linalg.norm(data)
     normalisedErrors = []
-    if mode == "randomized":
+    if mode == "randomized": # randomized approximate SVD
         U, S, Vt = randomized_svd(data, n_components=5 + max(approx_ranks))
         for r in approx_ranks:
             # recon = randomized_SVD_comp_decomp(data, cf)
             recon = U[:, :r] @ np.diag(S[:r]) @ Vt[:r, :]
             normalisedErrors.append(np.linalg.norm(data - recon) / datanorm)
-    else:
+    else: # true low rank SVD
         rows, columns = data.shape
         U, S, Vt = la.svd(data)
 

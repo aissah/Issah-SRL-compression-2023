@@ -40,7 +40,7 @@ def loadFORESEEhdf5(file, normalize="yes"):
         med = np.median(data, axis=0)
         for i in range(nSamples):
             data[:, i] = data[:, i] - med[i]
-
+        # L1 normalized rows
         max_of_rows = abs(data[:, :]).sum(axis=1)
         data = data / max_of_rows[:, np.newaxis]
     return data, timestamp_arr
@@ -76,11 +76,10 @@ def loadBradyHShdf5(file, normalize="yes"):
     data = np.transpose(data)
     if normalize == "yes":
         nSamples = np.shape(data)[1]
-        # get rid of laser drift
+        # get rid of laser drift and normalize
         med = np.median(data, axis=0)
         for i in range(nSamples):
             data[:, i] = data[:, i] - med[i]
-
         max_of_rows = abs(data[:, :]).sum(axis=1)
         data = data / max_of_rows[:, np.newaxis]
     return data, timestamp_arr
@@ -290,6 +289,24 @@ def randomized_SVD_comp_decomp(data, compFactor):
 
 
 def powerSpectrum(data, samplingFrequency):
+    """
+    Calculate the power spectrum and its frequencies for each channel of data.
+
+    Parameters
+    ----------
+    data : 2-dimensional numpy array
+        Data to be analyzed for frequency content.
+    samplingFrequency : float
+        Number of samples per second for each sensor.
+
+    Returns
+    -------
+    powerspectrum : 2-dimensional numpy array
+        Power spectrum of each channel
+    frequencies : 1-dimensional numpy array 
+        Array of frequencies (in Hz) represented by power spectrum
+
+    """
     dimensions = np.ndim(data)
 
     fouriertransform = np.fft.rfft(data, norm="forward")
@@ -305,19 +322,22 @@ def powerSpectrum(data, samplingFrequency):
 
 
 def windowedPowerSpectrum(data, samplingFrequency, windowlength=5):
+    """
+****to add****
+    """
     dimensions = np.ndim(data)
 
     if dimensions == 1:
         totaltime = len(data) / samplingFrequency
         intervals = np.arange(windowlength, totaltime, windowlength, dtype=int) * int(
             samplingFrequency
-        )
+        ) # break time series into windowed intervals
         win_start = 0
         win_data = data[win_start : intervals[0]]
         powerspectrum, frequencies = powerSpectrum(win_data, samplingFrequency)
         windowedpowerspectrum = powerspectrum[np.newaxis]
         win_start = intervals[0]
-        for win_end in intervals[1:]:
+        for win_end in intervals[1:]: # for each interval, calculate and record its spectrum
             win_data = data[win_start:win_end]
             powerspectrum, _ = powerSpectrum(win_data, samplingFrequency)
             windowedpowerspectrum = np.append(
@@ -328,13 +348,13 @@ def windowedPowerSpectrum(data, samplingFrequency, windowlength=5):
         totaltime = len(data[0]) / samplingFrequency
         intervals = np.arange(windowlength, totaltime, windowlength, dtype=int) * int(
             samplingFrequency
-        )
+        ) # break time series into windowed intervals
         win_start = 0
         win_data = data[:, win_start : intervals[0]]
         powerspectrum, frequencies = powerSpectrum(win_data, samplingFrequency)
         windowedpowerspectrum = powerspectrum[np.newaxis]
         win_start = intervals[0]
-        for win_end in intervals[1:]:
+        for win_end in intervals[1:]: # for each interval, calculate and record its spectrum
             win_data = data[:, win_start:win_end]
             powerspectrum, _ = powerSpectrum(win_data, samplingFrequency)
             windowedpowerspectrum = np.append(
@@ -355,7 +375,7 @@ def weigthedAverageRatio(data1, data2):
 
 def multweigthedAverageRatio(data1, data2, axis=1):
     shape = np.shape(data1)
-    # average along frequency
+    # average of ratios across all frequencies
     if axis == 0:
         weightedaverageratio = weigthedAverageRatio(
             np.transpose(data1[:, :, 0]), np.transpose(data2[:, :, 0])
@@ -435,7 +455,8 @@ def windowedNormalisedErrors(data1, data2, samplingFrequency, windowinterval, ax
         )
         windowednormalisederrors = [normalisederrors]
         win_start = intervals[0]
-        for win_end in intervals[1:]:
+        # for each window, check normalized error across frequencies
+        for win_end in intervals[1:]: 
             win_data1 = data1[win_start:win_end]
             win_data2 = data2[win_start:win_end]
             normalisederrors = np.linalg.norm(win_data1 - win_data2) / np.linalg.norm(
@@ -454,6 +475,7 @@ def windowedNormalisedErrors(data1, data2, samplingFrequency, windowinterval, ax
         ) / np.linalg.norm(win_data1, axis=axis)
         windowednormalisederrors = normalisederrors[:, np.newaxis]
         win_start = intervals[0]
+        # for each window, check normalized error across frequencies
         for win_end in intervals[1:]:
             win_data1 = data1[:, win_start:win_end]
             win_data2 = data2[:, win_start:win_end]
@@ -567,7 +589,8 @@ def loadtdms(
     import tdms_reader as tr
 
     tdms = tr.TdmsReader(file_path)
-    props = tdms.get_properties()
+    props = tdms.get_properties() # metadata/headers
+    # spatial dimensions
     zero_offset = props.get("Zero Offset (m)")
     channel_spacing = props.get("SpatialResolution[m]") * props.get(
         "Fibre Length Multiplier"
@@ -580,8 +603,9 @@ def loadtdms(
     data = tdms.get_data(
         first_channel, last_channel, first_time_sample, last_time_sample
     )
-    data = data.transpose()
+    data = data.transpose() # after transpose: rows are channels, columns are time samples
 
+    # can subselect channels that are better quality
     if selectchannels == "yes":
         if selectionfile == None:
             selectionfile = r"D:\CSM\Mines_Research\\foresee_calibration.txt"
@@ -596,7 +620,7 @@ def loadtdms(
         med = np.median(data, axis=0)
         for i in range(nSamples):
             data[:, i] = data[:, i] - med[i]
-
+        # L1 normalization of each channel
         max_of_rows = abs(data).sum(axis=1)
         data = data / (max_of_rows[:, np.newaxis])
 
