@@ -39,7 +39,7 @@ def loadFORESEEhdf5(file, normalize="yes"):
         med = np.median(data, axis=0)
         for i in range(nSamples):
             data[:, i] = data[:, i] - med[i]
-        # normalize each row by its L1 norm 
+        # normalize each row by its L1 norm
         max_of_rows = abs(data[:, :]).sum(axis=1)
         data = data / max_of_rows[:, np.newaxis]
     return data
@@ -79,7 +79,7 @@ def loadBradyHShdf5(file, normalize="yes"):
         med = np.median(data, axis=0)
         for i in range(nSamples):
             data[:, i] = data[:, i] - med[i]
-        # normalize each row by its L1 norm 
+        # normalize each row by its L1 norm
         max_of_rows = abs(data[:, :]).sum(axis=1)
         data = data / max_of_rows[:, np.newaxis]
     return data, timestamp_arr
@@ -106,7 +106,7 @@ def accuracyTest_zfp(data, mode):
         Compression factor at each level of compression.
 
     """
-    # Lossless compression check 
+    # Lossless compression check
     compressed_data_lossless = zfpy.compress_numpy(data)
     lossless_size = len(compressed_data_lossless)
     decompressed_array_lossless = zfpy.decompress_numpy(compressed_data_lossless)
@@ -118,7 +118,9 @@ def accuracyTest_zfp(data, mode):
     sizes = []
     errors = []
     if mode == "tolerance":
-        tolerances = np.logspace(3, -5, 20) # multiple tolerance factors to check relative error
+        tolerances = np.logspace(
+            3, -5, 20
+        )  # multiple tolerance factors to check relative error
         for tol in tolerances:
             compressed_data_lossy = zfpy.compress_numpy(data, tolerance=tol)
             size = len(compressed_data_lossy)
@@ -130,7 +132,9 @@ def accuracyTest_zfp(data, mode):
         errors.append(lossless_error)
         compressionfactors = [datasize / a for a in sizes]
     elif mode == "precision":
-        precisions = np.linspace(3, 16, 14) # multiple precision levels to check relative error
+        precisions = np.linspace(
+            3, 16, 14
+        )  # multiple precision levels to check relative error
         for prec in precisions:
             compressed_data_lossy = zfpy.compress_numpy(data, precision=prec)
             size = len(compressed_data_lossy)
@@ -143,7 +147,9 @@ def accuracyTest_zfp(data, mode):
         compressionfactors = [datasize / a for a in sizes]
 
     elif mode == "bitrate":
-        bitrates = np.linspace(1, 16, 16) # multiple bitrate levels to check relative errors
+        bitrates = np.linspace(
+            1, 16, 16
+        )  # multiple bitrate levels to check relative errors
         for bitrate in bitrates:
             compressed_data_lossy = zfpy.compress_numpy(data, rate=bitrate)
             size = len(compressed_data_lossy)
@@ -294,6 +300,7 @@ def compDecompSVD(data, compFactor):
 
     """
     import scipy.linalg as la
+
     # factorization
     rows, columns = data.shape
     approxRank = int((rows * columns) / (compFactor * (rows + columns)))
@@ -329,14 +336,16 @@ def partition_compDecompSVD(data, compFactor, min_ncols):
     ncols = len(data[0])
     partition_start = 0
     partition_end = min(min_ncols, ncols)
-    if (partition_end + min_ncols) > ncols: # just 1 patch of data
+    if (partition_end + min_ncols) > ncols:  # just 1 patch of data
         reconstructed_data = compDecompSVD(data[:, partition_start:], compFactor)
         flag = 0
-    else: # grab a smaller subset of the data
+    else:  # grab a smaller subset of the data
         reconstructed_data = compDecompSVD(
             data[:, partition_start:partition_end], compFactor
         )
-    while flag == 1: # loop through smaller subsets of the data until all patches decomposed
+    while (
+        flag == 1
+    ):  # loop through smaller subsets of the data until all patches decomposed
         partition_start = partition_end
         partition_end = min(partition_end + min_ncols, ncols)
         if (partition_end + min_ncols) > ncols:
@@ -346,7 +355,7 @@ def partition_compDecompSVD(data, compFactor, min_ncols):
                 axis=1,
             )
             flag = 0
-        else: 
+        else:
             reconstructed_data = np.append(
                 reconstructed_data,
                 compDecompSVD(data[:, partition_start:partition_end], compFactor),
@@ -450,13 +459,13 @@ def normalised_errors_SVD(data, compFactors, mode="randomized"):
 
     datanorm = np.linalg.norm(data)
     normalisedErrors = []
-    if mode == "randomized": # randomized approximate SVD
+    if mode == "randomized":  # randomized approximate SVD
         U, S, Vt = randomized_svd(data, n_components=5 + max(approx_ranks))
         for r in approx_ranks:
             # recon = randomized_SVD_comp_decomp(data, cf)
             recon = U[:, :r] @ np.diag(S[:r]) @ Vt[:r, :]
             normalisedErrors.append(np.linalg.norm(data - recon) / datanorm)
-    else: # true low rank SVD
+    else:  # true low rank SVD
         rows, columns = data.shape
         U, S, Vt = la.svd(data)
 

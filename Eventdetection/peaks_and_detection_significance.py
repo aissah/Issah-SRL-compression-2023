@@ -37,13 +37,15 @@ cc_location = Path("/u/st/by/aissah/scratch/event_detection/template_matching")
 save_location = Path("/u/st/by/aissah/scratch/event_detection/peaks")
 event_id = sys.argv[1]  # see template_matching.py for event ID's
 compression_type = sys.argv[2]  # N/A if original data
-threshold = int(sys.argv[3])  # minimum detection significance that will be picked as significant event
+threshold = int(
+    sys.argv[3]
+)  # minimum detection significance that will be picked as significant event
 
 all_files = os.listdir(cc_location)
 all_files.sort()
 data_files = []
 
-if compression_type == "N/A": # structures to track events in raw data
+if compression_type == "N/A":  # structures to track events in raw data
     for a in all_files:
         if event_id in a and "uncompressed" in a:
             data_files.append(a)
@@ -51,7 +53,7 @@ if compression_type == "N/A": # structures to track events in raw data
     all_peak_locations = {"original_data": []}
     all_detection_significances = {"original_data": []}
     data_time = {"original_data": []}
-else:   # structures to track events in compressed data for each compression type
+else:  # structures to track events in compressed data for each compression type
     for a in all_files:
         if event_id in a and compression_type in a:
             data_files.append(a)
@@ -112,7 +114,7 @@ for a in data_files:
             all_compression_rates = np.append(
                 all_compression_rates, np.array(metadata["compression_rates"]), axis=0
             )
-        for b in mean_ccs_acrossfiles: 
+        for b in mean_ccs_acrossfiles:
             b = np.nan_to_num(b, nan=0.0)
             if np.isnan(np.mean(b)):
                 print(np.mean(b))

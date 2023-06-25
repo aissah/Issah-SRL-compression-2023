@@ -23,11 +23,13 @@ import numpy as np
 basepath = "/beegfs/projects/martin/foresee/apr10_20"  # directory containing data
 # files
 files = os.listdir(basepath)
-selectionsize = int(sys.argv[1])    # number of files for this batch to analyze
-groups = int(sys.argv[2])           # number of groups
-batch = int(sys.argv[3])            # batch ID (e.g. if 4 tasks, job sub. script sets this to 1, 2, 3, or 4)
-compression_type = sys.argv[4]      # "wavelet"
-flag = int(sys.argv[5])             # 1=from beginning, 2=start from checkpoint
+selectionsize = int(sys.argv[1])  # number of files for this batch to analyze
+groups = int(sys.argv[2])  # number of groups
+batch = int(
+    sys.argv[3]
+)  # batch ID (e.g. if 4 tasks, job sub. script sets this to 1, 2, 3, or 4)
+compression_type = sys.argv[4]  # "wavelet"
+flag = int(sys.argv[5])  # 1=from beginning, 2=start from checkpoint
 
 numberoffiles = len(files)
 batch_size = np.ceil(numberoffiles / groups)
@@ -72,7 +74,7 @@ for b in selection:
         if len(data) % 2 == 1:
             data = data[:-1]
 
-        if compression_type == "wavelet": # run 1D then 2D wavelet tests
+        if compression_type == "wavelet":  # run 1D then 2D wavelet tests
             error1d, _ = ATFuncs.accuracyTest_wavelet(
                 data, mode="1d", threshold_percentiles=thresholds
             )
@@ -86,7 +88,7 @@ for b in selection:
             else:
                 errors_1dw = np.append(errors_1dw, np.array([error1d]), axis=0)
                 errors_2dw = np.append(errors_2dw, np.array([error2d]), axis=0)
-        elif compression_type == "zfp": # run zfp tests with 3 types of accuracy
+        elif compression_type == "zfp":  # run zfp tests with 3 types of accuracy
             errort, compressionfactort = ATFuncs.accuracyTest_zfp(
                 data, mode="tolerance"
             )
@@ -119,7 +121,7 @@ for b in selection:
                 compressionfactors_bitrate = np.append(
                     compressionfactors_bitrate, np.array([compressionfactorb]), axis=0
                 )
-        elif compression_type == "svd": # run SVD tests (with randomized SVD)
+        elif compression_type == "svd":  # run SVD tests (with randomized SVD)
             errorSVD = ATFuncs.normalised_errors_SVD(
                 data, comp_factors_svd, mode="randomized"
             )

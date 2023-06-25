@@ -303,7 +303,7 @@ def powerSpectrum(data, samplingFrequency):
     -------
     powerspectrum : 2-dimensional numpy array
         Power spectrum of each channel
-    frequencies : 1-dimensional numpy array 
+    frequencies : 1-dimensional numpy array
         Array of frequencies (in Hz) represented by power spectrum
 
     """
@@ -323,7 +323,7 @@ def powerSpectrum(data, samplingFrequency):
 
 def windowedPowerSpectrum(data, samplingFrequency, windowlength=5):
     """
-****to add****
+    ****to add****
     """
     dimensions = np.ndim(data)
 
@@ -331,13 +331,15 @@ def windowedPowerSpectrum(data, samplingFrequency, windowlength=5):
         totaltime = len(data) / samplingFrequency
         intervals = np.arange(windowlength, totaltime, windowlength, dtype=int) * int(
             samplingFrequency
-        ) # break time series into windowed intervals
+        )  # break time series into windowed intervals
         win_start = 0
         win_data = data[win_start : intervals[0]]
         powerspectrum, frequencies = powerSpectrum(win_data, samplingFrequency)
         windowedpowerspectrum = powerspectrum[np.newaxis]
         win_start = intervals[0]
-        for win_end in intervals[1:]: # for each interval, calculate and record its spectrum
+        for win_end in intervals[
+            1:
+        ]:  # for each interval, calculate and record its spectrum
             win_data = data[win_start:win_end]
             powerspectrum, _ = powerSpectrum(win_data, samplingFrequency)
             windowedpowerspectrum = np.append(
@@ -348,13 +350,15 @@ def windowedPowerSpectrum(data, samplingFrequency, windowlength=5):
         totaltime = len(data[0]) / samplingFrequency
         intervals = np.arange(windowlength, totaltime, windowlength, dtype=int) * int(
             samplingFrequency
-        ) # break time series into windowed intervals
+        )  # break time series into windowed intervals
         win_start = 0
         win_data = data[:, win_start : intervals[0]]
         powerspectrum, frequencies = powerSpectrum(win_data, samplingFrequency)
         windowedpowerspectrum = powerspectrum[np.newaxis]
         win_start = intervals[0]
-        for win_end in intervals[1:]: # for each interval, calculate and record its spectrum
+        for win_end in intervals[
+            1:
+        ]:  # for each interval, calculate and record its spectrum
             win_data = data[:, win_start:win_end]
             powerspectrum, _ = powerSpectrum(win_data, samplingFrequency)
             windowedpowerspectrum = np.append(
@@ -436,7 +440,7 @@ def windowedNormalisedErrors(data1, data2, samplingFrequency, windowinterval, ax
     Returns
     -------
     windowednormalisederrors : 1d or 2d numpy array
-        Array containing norm of errors. The axis the corresponds to the 
+        Array containing norm of errors. The axis the corresponds to the
         windowing axis has length divided by samplingFrequency * windowinterval.
         The other axis is the same as that of data1 and data2.
 
@@ -456,7 +460,7 @@ def windowedNormalisedErrors(data1, data2, samplingFrequency, windowinterval, ax
         windowednormalisederrors = [normalisederrors]
         win_start = intervals[0]
         # for each window, check normalized error across frequencies
-        for win_end in intervals[1:]: 
+        for win_end in intervals[1:]:
             win_data1 = data1[win_start:win_end]
             win_data2 = data2[win_start:win_end]
             normalisederrors = np.linalg.norm(win_data1 - win_data2) / np.linalg.norm(
@@ -589,7 +593,7 @@ def loadtdms(
     import tdms_reader as tr
 
     tdms = tr.TdmsReader(file_path)
-    props = tdms.get_properties() # metadata/headers
+    props = tdms.get_properties()  # metadata/headers
     # spatial dimensions
     zero_offset = props.get("Zero Offset (m)")
     channel_spacing = props.get("SpatialResolution[m]") * props.get(
@@ -603,7 +607,9 @@ def loadtdms(
     data = tdms.get_data(
         first_channel, last_channel, first_time_sample, last_time_sample
     )
-    data = data.transpose() # after transpose: rows are channels, columns are time samples
+    data = (
+        data.transpose()
+    )  # after transpose: rows are channels, columns are time samples
 
     # can subselect channels that are better quality
     if selectchannels == "yes":

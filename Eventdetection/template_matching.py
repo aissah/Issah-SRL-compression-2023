@@ -299,7 +299,7 @@ if batch == 1:
         metadata=metadata,
     )
 
-else: # with more batches, append end of previous file for continuity
+else:  # with more batches, append end of previous file for continuity
     try:
         data_files = data_files[(batch - 1) * batch_size - 1 : batch * batch_size]
         metadata["files"] = [a[-15:-3] for a in data_files]
