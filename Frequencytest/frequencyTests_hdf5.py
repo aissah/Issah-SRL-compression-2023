@@ -51,16 +51,18 @@ window = 5
 tolerance = 0.2  # tolerance for zfp compression
 precision = 4  # precision for zfp compression
 bitrate = 4  # bitrate for zfp compression
+zfp_mode = "p"  # zfp for comparison: p = precision, t = tolerace, b = fixed bitrate
 threshold1 = 95  # percentile for 1D wavelet thresholding
 threshold2 = 95  # percentile for 2D wavelet thresholding
 svd_comp_factor = 20  # compression factor for SVD
 samplingFrequency = 125  # sampling frequency of data
 
-flag = 1
+FLAG = 1  # to indicate first file in analysis
 count = 0
 
 files = os.listdir(basepath)
 for b in files:
+    # count to manage the number of files to process
     if count < 3:
         count += 1
         fname = os.path.join(basepath, b)
@@ -70,46 +72,49 @@ for b in files:
         if len(data) % 2 == 1:
             data = data[:-1]
 
-        if flag == 1:
+        if FLAG == 1:
+            # If this is the first file to be processed, we initialize assign variables meant for
+            # data across files to current file
             stackedData = stackInWindows(data, samplingFrequency, 1)
             windowedpowerspectrum, frequencies = windowedPowerSpectrum(
                 data, samplingFrequency, windowlength=window
             )
             windowedpowerspectra_original = windowedpowerspectrum
 
-            # compresseddata_lossy = zfpy.compress_numpy(data, tolerance=tolerance)
-            # decompresseddata_lossy = zfpy.decompress_numpy(compresseddata_lossy)
-            # windowedpowerspectrum, _ = windowedPowerSpectrum(
-            #     decompresseddata_lossy, samplingFrequency, windowlength=window
-            # )
-            # windowedpowerspectra_tolerance = windowedpowerspectrum
-            # windowedNormalisedError_tolerance = windowedNormalisedErrors(
-            #     data, decompresseddata_lossy, samplingFrequency, window, axis=1
-            # )
-            # windowedNormalisedErrors_tolerance = windowedNormalisedError_tolerance
-
             # zfp error analysis
-            compresseddata_lossy = zfpy.compress_numpy(data, precision=precision)
-            decompresseddata_lossy = zfpy.decompress_numpy(compresseddata_lossy)
-            windowedpowerspectrum, _ = windowedPowerSpectrum(
-                decompresseddata_lossy, samplingFrequency, windowlength=window
-            )
-            windowedpowerspectra_precision = windowedpowerspectrum
-            windowedNormalisedError_precision = windowedNormalisedErrors(
-                data, decompresseddata_lossy, samplingFrequency, window, axis=1
-            )
-            windowedNormalisedErrors_precision = windowedNormalisedError_precision
-
-            # compresseddata_lossy = zfpy.compress_numpy(data, rate=bitrate)
-            # decompresseddata_lossy = zfpy.decompress_numpy(compresseddata_lossy)
-            # windowedpowerspectrum, _ = windowedPowerSpectrum(
-            #     decompresseddata_lossy, samplingFrequency, windowlength=window
-            # )
-            # windowedpowerspectra_bitrate = windowedpowerspectrum
-            # windowedNormalisedError_bitrate = windowedNormalisedErrors(
-            #     data, decompresseddata_lossy, samplingFrequency, window, axis=1
-            # )
-            # windowedNormalisedErrors_bitrate = windowedNormalisedError_bitrate
+            if zfp_mode == "t":
+                compresseddata_lossy = zfpy.compress_numpy(data, tolerance=tolerance)
+                decompresseddata_lossy = zfpy.decompress_numpy(compresseddata_lossy)
+                windowedpowerspectrum, _ = windowedPowerSpectrum(
+                    decompresseddata_lossy, samplingFrequency, windowlength=window
+                )
+                windowedpowerspectra_tolerance = windowedpowerspectrum
+                windowedNormalisedError_tolerance = windowedNormalisedErrors(
+                    data, decompresseddata_lossy, samplingFrequency, window, axis=1
+                )
+                windowedNormalisedErrors_tolerance = windowedNormalisedError_tolerance
+            elif zfp_mode == "p":
+                compresseddata_lossy = zfpy.compress_numpy(data, precision=precision)
+                decompresseddata_lossy = zfpy.decompress_numpy(compresseddata_lossy)
+                windowedpowerspectrum, _ = windowedPowerSpectrum(
+                    decompresseddata_lossy, samplingFrequency, windowlength=window
+                )
+                windowedpowerspectra_precision = windowedpowerspectrum
+                windowedNormalisedError_precision = windowedNormalisedErrors(
+                    data, decompresseddata_lossy, samplingFrequency, window, axis=1
+                )
+                windowedNormalisedErrors_precision = windowedNormalisedError_precision
+            elif zfp_mode == "b":
+                compresseddata_lossy = zfpy.compress_numpy(data, rate=bitrate)
+                decompresseddata_lossy = zfpy.decompress_numpy(compresseddata_lossy)
+                windowedpowerspectrum, _ = windowedPowerSpectrum(
+                    decompresseddata_lossy, samplingFrequency, windowlength=window
+                )
+                windowedpowerspectra_bitrate = windowedpowerspectrum
+                windowedNormalisedError_bitrate = windowedNormalisedErrors(
+                    data, decompresseddata_lossy, samplingFrequency, window, axis=1
+                )
+                windowedNormalisedErrors_bitrate = windowedNormalisedError_bitrate
 
             # 1D wavelet error analysis
             decompresseddata = soft_comp_decomp1d(data, lvl=5, comp_ratio=threshold1)
@@ -144,9 +149,11 @@ for b in files:
             )
             windowedNormalisedErrors_svd = windowedNormalisedError_svd
 
-            flag = 0
+            FLAG = 0
             starttime = datetime.utcfromtimestamp(int(timestamps[0]))
         else:
+            # If this is not the first file to be processed, we append to variables initialized
+            # in above if condition.
             stack = stackInWindows(data, samplingFrequency, 1)
             stackedData = np.append(stackedData, stack, axis=1)
             windowedpowerspectrum, _ = windowedPowerSpectrum(
@@ -155,58 +162,58 @@ for b in files:
             windowedpowerspectra_original = np.append(
                 windowedpowerspectra_original, windowedpowerspectrum, axis=0
             )
-
-            # compresseddata_lossy = zfpy.compress_numpy(data, tolerance=tolerance)
-            # decompresseddata_lossy = zfpy.decompress_numpy(compresseddata_lossy)
-            # windowedpowerspectrum, _ = windowedPowerSpectrum(
-            #     decompresseddata_lossy, samplingFrequency, windowlength=window
-            # )
-            # windowedpowerspectra_tolerance = np.append(
-            #     windowedpowerspectra_tolerance, windowedpowerspectrum, axis=0
-            # )
-            # windowedNormalisedError_tolerance = windowedNormalisedErrors(
-            #     data, decompresseddata_lossy, samplingFrequency, window, axis=1
-            # )
-            # windowedNormalisedErrors_tolerance = np.append(
-            #     windowedNormalisedErrors_tolerance,
-            #     windowedNormalisedError_tolerance,
-            #     axis=1,
-            # )
-
             # zfp compression analysis of errors in windowed spectrum
-            compresseddata_lossy = zfpy.compress_numpy(data, precision=precision)
-            decompresseddata_lossy = zfpy.decompress_numpy(compresseddata_lossy)
-            windowedpowerspectrum, _ = windowedPowerSpectrum(
-                decompresseddata_lossy, samplingFrequency, windowlength=window
-            )
-            windowedpowerspectra_precision = np.append(
-                windowedpowerspectra_precision, windowedpowerspectrum, axis=0
-            )
-            windowedNormalisedError_precision = windowedNormalisedErrors(
-                data, decompresseddata_lossy, samplingFrequency, window, axis=1
-            )
-            windowedNormalisedErrors_precision = np.append(
-                windowedNormalisedErrors_precision,
-                windowedNormalisedError_precision,
-                axis=1,
-            )
-
-            # compresseddata_lossy = zfpy.compress_numpy(data, rate=bitrate)
-            # decompresseddata_lossy = zfpy.decompress_numpy(compresseddata_lossy)
-            # windowedpowerspectrum, _ = windowedPowerSpectrum(
-            #     decompresseddata_lossy, samplingFrequency, windowlength=window
-            # )
-            # windowedpowerspectra_bitrate = np.append(
-            #     windowedpowerspectra_bitrate, windowedpowerspectrum, axis=0
-            # )
-            # windowedNormalisedError_bitrate = windowedNormalisedErrors(
-            #     data, decompresseddata_lossy, samplingFrequency, window, axis=1
-            # )
-            # windowedNormalisedErrors_bitrate = np.append(
-            #     windowedNormalisedErrors_bitrate,
-            #     windowedNormalisedError_bitrate,
-            #     axis=1,
-            # )
+            if zfp_mode == "t":
+                compresseddata_lossy = zfpy.compress_numpy(data, tolerance=tolerance)
+                decompresseddata_lossy = zfpy.decompress_numpy(compresseddata_lossy)
+                windowedpowerspectrum, _ = windowedPowerSpectrum(
+                    decompresseddata_lossy, samplingFrequency, windowlength=window
+                )
+                windowedpowerspectra_tolerance = np.append(
+                    windowedpowerspectra_tolerance, windowedpowerspectrum, axis=0
+                )
+                windowedNormalisedError_tolerance = windowedNormalisedErrors(
+                    data, decompresseddata_lossy, samplingFrequency, window, axis=1
+                )
+                windowedNormalisedErrors_tolerance = np.append(
+                    windowedNormalisedErrors_tolerance,
+                    windowedNormalisedError_tolerance,
+                    axis=1,
+                )
+            elif zfp_mode == "p":
+                compresseddata_lossy = zfpy.compress_numpy(data, precision=precision)
+                decompresseddata_lossy = zfpy.decompress_numpy(compresseddata_lossy)
+                windowedpowerspectrum, _ = windowedPowerSpectrum(
+                    decompresseddata_lossy, samplingFrequency, windowlength=window
+                )
+                windowedpowerspectra_precision = np.append(
+                    windowedpowerspectra_precision, windowedpowerspectrum, axis=0
+                )
+                windowedNormalisedError_precision = windowedNormalisedErrors(
+                    data, decompresseddata_lossy, samplingFrequency, window, axis=1
+                )
+                windowedNormalisedErrors_precision = np.append(
+                    windowedNormalisedErrors_precision,
+                    windowedNormalisedError_precision,
+                    axis=1,
+                )
+            elif zfp_mode == "b":
+                compresseddata_lossy = zfpy.compress_numpy(data, rate=bitrate)
+                decompresseddata_lossy = zfpy.decompress_numpy(compresseddata_lossy)
+                windowedpowerspectrum, _ = windowedPowerSpectrum(
+                    decompresseddata_lossy, samplingFrequency, windowlength=window
+                )
+                windowedpowerspectra_bitrate = np.append(
+                    windowedpowerspectra_bitrate, windowedpowerspectrum, axis=0
+                )
+                windowedNormalisedError_bitrate = windowedNormalisedErrors(
+                    data, decompresseddata_lossy, samplingFrequency, window, axis=1
+                )
+                windowedNormalisedErrors_bitrate = np.append(
+                    windowedNormalisedErrors_bitrate,
+                    windowedNormalisedError_bitrate,
+                    axis=1,
+                )
 
             # 1d wavelet compression analysis of errors in windowed spectrum
             decompresseddata = soft_comp_decomp1d(data, lvl=5, comp_ratio=threshold1)
