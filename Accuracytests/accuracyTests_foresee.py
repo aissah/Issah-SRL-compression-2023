@@ -73,10 +73,10 @@ for b in selection:
             data = data[:-1]
 
         if compression_type == "wavelet": # run 1D then 2D wavelet tests
-            error1d, _ = ATFuncs.accracyTest_wavelet(
+            error1d, _ = ATFuncs.accuracyTest_wavelet(
                 data, mode="1d", threshold_percentiles=thresholds
             )
-            error2d, _ = ATFuncs.accracyTest_wavelet(
+            error2d, _ = ATFuncs.accuracyTest_wavelet(
                 data, mode="2d", threshold_percentiles=thresholds
             )
             if flag == 1:

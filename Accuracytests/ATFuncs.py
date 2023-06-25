@@ -34,7 +34,13 @@ def loadFORESEEhdf5(file, normalize="yes"):
         dataset = open_file["raw"]
         data = np.float32(dataset)
     if normalize == "yes":
-        max_of_rows = abs(data[:, :]).max(axis=1)
+        nSamples = np.shape(data)[1]
+        # get rid of laser drift
+        med = np.median(data, axis=0)
+        for i in range(nSamples):
+            data[:, i] = data[:, i] - med[i]
+        # normalize each row by its L1 norm 
+        max_of_rows = abs(data[:, :]).sum(axis=1)
         data = data / max_of_rows[:, np.newaxis]
     return data
 
@@ -151,7 +157,7 @@ def accuracyTest_zfp(data, mode):
     return errors, compressionfactors
 
 
-def accracyTest_wavelet(data, mode, threshold_percentiles=list(range(5, 95, 5))):
+def accuracyTest_wavelet(data, mode, threshold_percentiles=list(range(5, 95, 5))):
     """
     Calculates Frobenius norm of noise introduced by compression and various
     levels of compression.
@@ -219,18 +225,8 @@ def soft_threshold(wavelet_coeffs, threshold_percentile, mode="1d"):
     """
     if mode == "1d":
         if wavelet_coeffs[1].ndim == 2:
-            # threshold each level and channel separately
-            # thresheld_coeffs = []
-            # for level_coeffs in wavelet_coeffs:
-            #     thresholds = np.percentile(
-            #         abs(level_coeffs), threshold_percentile, axis=1
-            #     )
-            #     thresheld_coeffs.append(
-            #         np.sign(level_coeffs)
-            #         * np.maximum(np.abs(level_coeffs) - thresholds[:, np.newaxis], 0)
-            #     )
-
-            # threshold just channels separately
+            # for 2-d data i.e. multiple channels
+            # threshold channels separately
             all_coeffs = wavelet_coeffs[0]
             for a in range(1, len(wavelet_coeffs)):
                 all_coeffs = np.append(all_coeffs, wavelet_coeffs[a], axis=1)
@@ -241,43 +237,33 @@ def soft_threshold(wavelet_coeffs, threshold_percentile, mode="1d"):
                 for level_coeffs in wavelet_coeffs
             ]
         elif wavelet_coeffs[1].ndim == 1:
-            # threshold each level and channel separately
-            # thresheld_coeffs = []
-            # for level_coeffs in wavelet_coeffs:
-            #     threshold = np.percentile(abs(level_coeffs), threshold_percentile)
-            #     thresheld_coeffs.append(
-            #         np.sign(level_coeffs)
-            #         * np.maximum(np.abs(level_coeffs) - threshold, 0)
-            #     )
-
-            # threshold just channels separately
+            # for a single time series. i.e. one channel
+            # put all coefficients in a single array
             all_coeffs = wavelet_coeffs[0]
             for a in range(1, len(wavelet_coeffs)):
                 all_coeffs = np.append(all_coeffs, wavelet_coeffs[a])
+            # Calculate threshold as a percentile of all coefficients
             threshold = np.percentile(abs(all_coeffs), threshold_percentile)
+            # Thresholf coefficients
             thresheld_coeffs = [
                 np.sign(level_coeffs) * np.maximum(np.abs(level_coeffs) - threshold, 0)
                 for level_coeffs in wavelet_coeffs
             ]
     elif mode == "2d":
-        if len(wavelet_coeffs[0]) == 1:
-            thresheld_coeffs = [wavelet_coeffs[0], wavelet_coeffs[1]]
-            next_level = 2
-        elif len(wavelet_coeffs[0]) == 2:
-            thresheld_coeffs = [wavelet_coeffs[0], wavelet_coeffs[1]]
-            next_level = 1
-        else:
-            threshold = np.percentile(abs(wavelet_coeffs[0]), threshold_percentile)
-            thresheld_coeffs = [
-                np.sign(wavelet_coeffs[0])
-                * np.maximum(np.abs(wavelet_coeffs[0]) - threshold, 0)
-            ]
-            next_level = 1
-        # for each level, set the threshold based on percentile at that level
-        for level_coeffs in wavelet_coeffs[next_level:]: 
-            threshold = np.percentile(
-                abs(np.concatenate(level_coeffs)), threshold_percentile
-            )
+        # cofficients from 2-d dimensional wavelet decomposition
+        # put all coefficients in a single array
+        allcoeffs = wavelet_coeffs[0]
+        for b in wavelet_coeffs[1:]:
+            allcoeffs = np.append(allcoeffs, np.ravel(np.concatenate(b)))
+        # Calculate threshold as a percentile of all coefficients
+        threshold = np.percentile(abs(allcoeffs), threshold_percentile)
+        # Threshold coefficients. Start by handling approximation coefficients
+        thresheld_coeffs = [
+            np.sign(wavelet_coeffs[0])
+            * np.maximum(np.abs(wavelet_coeffs[0]) - threshold, 0)
+        ]
+        # Threshold detail coefficients
+        for level_coeffs in wavelet_coeffs[1:]:
             thresheld_level = tuple(
                 [
                     np.sign(orient_coeffs)

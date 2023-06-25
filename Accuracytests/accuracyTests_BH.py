@@ -28,7 +28,7 @@ selectionsize = int(sys.argv[1]) # number of files for this batch to analyze
 groups = int(sys.argv[2])        # number of groups
 batch = int(sys.argv[3])         # batch ID (e.g. if 4 tasks, job sub. script sets this to 1, 2, 3, or 4)
 compression_type = sys.argv[4]   # "wavelet", "zfp", "svd"
-flag = int(sys.argv[5])          # 1=from beginning, 2=start from checkpoint
+flag = int(sys.argv[5])          # 1=from beginning, 0=start from checkpoint
 
 data_basepath = "/beegfs/projects/martin/BradyHotspring"  # directory containing data
 # make list of all files in directory
@@ -71,17 +71,6 @@ else:
     checkpoint = selection[0]
 count = selection[0]
 
-# if flag==0:
-#     with open(errors_filename, 'rb') as f:  # Python 3: open(..., 'rb')
-#         errors_tolerance, errors_precision, errors_bitrate, errors_1dw,errors_2dw,errorsSVD, checkpoint = pickle.load(f)
-#     with open(compratio_filename, 'rb') as f:  # Python 3: open(..., 'wb')
-#         compressionfactors_tolerance, compressionfactors_precision, compressionfactors_bitrate, thresholds,compFactorsSVD = pickle.load(f)
-#     with open(chosenfiles_savename, 'rb') as f:
-#         chosenfiles=pickle.load(f)
-# else:
-#     chosenfiles=[]
-#     checkpoint=start
-
 
 thresholds = list(range(5, 95, 5)) + list(range(92, 100, 2))
 compression_factors_wl = [100 / (100 - a) for a in thresholds]
@@ -99,10 +88,10 @@ for b in selection:
             data = data[:-1]
 
         if compression_type == "wavelet":  # run 1D then 2D wavelet tests
-            error1d, _ = ATFuncs.accracyTest_wavelet(
+            error1d, _ = ATFuncs.accuracyTest_wavelet(
                 data, mode="1d", threshold_percentiles=thresholds
             ) 
-            error2d, _ = ATFuncs.accracyTest_wavelet(
+            error2d, _ = ATFuncs.accuracyTest_wavelet(
                 data, mode="2d", threshold_percentiles=thresholds
             ) 
             if flag == 1:
