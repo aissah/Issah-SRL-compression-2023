@@ -105,24 +105,13 @@ def soft_comp_decomp1d(data_inuse, lvl=5, comp_ratio=80):
         Reconstructed data after compression.
 
     """
-    # 1D compress and decompress
+    # wavelet decomposition
     coeffs = pywt.wavedec(data_inuse, "db5", level=lvl)
+    # threshold wavelet coefficients
     thresheld_coeffs = soft_threshold(coeffs, comp_ratio, mode="1d")
-    # for a in range(len(coeffs[1])):
-    #     allcoeffs = coeffs[0][a].ravel()
-    #     for b in range(1, len(coeffs)):
-    #         allcoeffs = np.append(allcoeffs, coeffs[b][a].ravel())
-    #     th = np.percentile(np.absolute(allcoeffs), comp_ratio)
-    #     for b in range(len(coeffs)):
-    #         c = coeffs[b][a]
-    #         coeffs[b][a][np.absolute(c) <= th] = 0
-    #         coeffs[b][a][c > 0] -= th
-    #         coeffs[b][a][c < 0] += th
-
+    # reconstruct data using thresheld coefficients
     dc_data = pywt.waverec(thresheld_coeffs, "db5")
 
-    # max_of_rows = abs(dc_data[:,:]).max(axis=1)
-    # dc_data = dc_data/ max_of_rows[:, np.newaxis]
     return dc_data
 
 
@@ -146,30 +135,13 @@ def soft_comp_decomp2d(data_inuse, lvl=5, comp_ratio=96):
         Reconstructed data after compression.
 
     """
-    # dc_data2d=soft_comp_decomp2d(data, 5, 90)
+    # wavelet decomposition
     coeffs2d = pywt.wavedec2(data_inuse, "db5", level=lvl)
+    # threshold wavelet coefficients
     thresheld_coeffs = soft_threshold(coeffs2d, comp_ratio, mode="2d")
-    # allcoeffs2d = coeffs2d[0].ravel()
-    # for a in range(1, len(coeffs2d)):
-    #     for b in coeffs2d[a]:
-    #         allcoeffs2d = np.append(allcoeffs2d, b.ravel())
-
-    # th = np.percentile(np.absolute(allcoeffs2d), comp_ratio)
-    # coeffs2d[0][np.absolute(coeffs2d[0]) <= th] = 0
-    # coeffs2d[0][coeffs2d[0] > th] -= 0
-    # coeffs2d[0][coeffs2d[0] < th] += 0
-    # for a in range(1, len(coeffs2d)):
-    #     for b in range(len(coeffs2d[a])):
-    #         c = coeffs2d[a][b]
-    #         coeffs2d[a][b][np.absolute(c) <= th] = 0
-    #         coeffs2d[a][b][c > 0] -= th
-    #         coeffs2d[a][b][c < 0] += th
-
+    # reconstruct data using thresheld coefficients
     dc_data2d = pywt.waverec2(thresheld_coeffs, "db5")
 
-    # max_of_rows = abs(dc_data2d[:,500:2500]).max(axis=1)
-    # max_of_rows = abs(dc_data2d[:,:]).max(axis=1)
-    # dc_data2d = dc_data2d/ max_of_rows[:, np.newaxis]
     return dc_data2d
 
 
@@ -294,14 +266,14 @@ def powerSpectrum(data, samplingFrequency):
 
     Parameters
     ----------
-    data : 2-dimensional numpy array
+    data : 1 or 2-dimensional numpy array
         Data to be analyzed for frequency content.
     samplingFrequency : float
         Number of samples per second for each sensor.
 
     Returns
     -------
-    powerspectrum : 2-dimensional numpy array
+    powerspectrum : 1 or 2-dimensional numpy array
         Power spectrum of each channel
     frequencies : 1-dimensional numpy array
         Array of frequencies (in Hz) represented by power spectrum
@@ -323,7 +295,25 @@ def powerSpectrum(data, samplingFrequency):
 
 def windowedPowerSpectrum(data, samplingFrequency, windowlength=5):
     """
-    ****to add****
+    Calculate power spectrum of a time series in "windowlength" seconds windows.
+    If the data is 2 dimensional, the second axis is taken as the time axis
+
+    Parameters
+    ----------
+    data : 1 or 2-dimensional numpy array
+        Data to be analyzed for frequency content.
+    samplingFrequency : int/float
+        Sampling frequency of time series.
+    windowlength : int/float, optional
+       Length of windows to use in seconds. The default is 5.
+
+    Returns
+    -------
+    windowedpowerspectrum : 1 or 2-dimensional numpy array
+        Power spectra of the data.
+    frequencies : 1-dimensional numpy array
+        Frequencies corresponding to the power spectra.
+
     """
     dimensions = np.ndim(data)
 
@@ -370,6 +360,23 @@ def windowedPowerSpectrum(data, samplingFrequency, windowlength=5):
 
 
 def weigthedAverageRatio(data1, data2):
+    """
+    Weighted average of pointwise ratio of elements in data2 to elements in data1.
+    Weights are proportions of magnitudes of the respective elements in data1.
+
+    Parameters
+    ----------
+    data1 : 2-dimensional numpy array
+        Denominators.
+    data2 : 2-dimensional numpy array
+        Numerators.
+
+    Returns
+    -------
+    weightedaverageratio : 1-dimensional numpy array
+        weighted average ratios same length as that of the first axis.
+
+    """
     weights = data1 / np.sum(data1, axis=1)[:, np.newaxis]
     ratios = data2 / data1
     weightedaverageratio = np.nansum(weights * ratios, axis=1)
@@ -378,6 +385,27 @@ def weigthedAverageRatio(data1, data2):
 
 
 def multweigthedAverageRatio(data1, data2, axis=1):
+    """
+    Uses weigthedAverageRatio to get the weighted average of pointwise ratio
+    of elements in data2 to elements in data1. The data here are 3-dimensional.
+    Weights are proportions of magnitudes of the respective elements in data1.
+
+    Parameters
+    ----------
+    data1 : 3-dimensional numpy array
+        Denominators.
+    data2 : 3-dimensional numpy array
+        Numerators.
+    axis : int, optional
+        Axis to average along. The default is 1.
+
+    Returns
+    -------
+    weightedaverageratio : 2-dimensional numpy array
+        weighted average ratios same shape as the other axis apart from the
+        axis in input as that of the first axis.
+
+    """
     shape = np.shape(data1)
     # average of ratios across all frequencies
     if axis == 0:
@@ -507,6 +535,42 @@ def plotsaveimshow(
     filename,
     dateaxis=None,
 ):
+    """
+    Plotting function: very specialized and definitely not optimal way of doing
+    this.
+
+    Parameters
+    ----------
+    data : 2-dimensional numpy array
+        Data.
+    xextent : list/tuple
+        2-value list indicating the values at the beginning and end of x-axis.
+    yextent : list/tuple
+        2-value list indicating the values at the beginning and end of y-axis.
+    mini : float
+        minimum value to clip colorbar to.
+    maxi : int/float
+        maximum value to clip colorbar to.
+    xlabel : str
+        x-axis label.
+    ylabel : str
+        label of y-axis.
+    title : str
+        titile of plot.
+    color_scheme : cmap options
+        color scheme to use.
+    label_size : TYPE
+        size of plot lavels.
+    filename : str
+        name of saved image of plot.
+    dateaxis : int, optional
+        Indicate if either axis is a datetime axis. The default is None.
+
+    Returns
+    -------
+    None.
+
+    """
     plt.figure(figsize=(11, 7))
     if mini is None:
         plt.imshow(
@@ -543,6 +607,26 @@ def plotsaveimshow(
 
 
 def stackInWindows(data, samplingFrequency, windowlength=5):
+    """
+    Stack/average data in windows of windowlength seconds so that length along
+    the time axis of the data is divided by 5.
+
+    Parameters
+    ----------
+    data : 1d or 2d numpy array
+        Data to be stacked.
+    samplingFrequency : int/float
+        Samples per second of the input data.
+    windowlength : int/float, optional
+        length in seconds of windows to stack data in. The default is 5.
+
+    Returns
+    -------
+    stacks : 1d or 2d numpy array
+        stacked data. Same number of dimensions as the input data with the time
+        axis length divided by 5.
+
+    """
     dimensions = np.ndim(data)
 
     if dimensions == 1:
@@ -577,57 +661,3 @@ def stackInWindows(data, samplingFrequency, windowlength=5):
             win_start = win_end
 
     return stacks
-
-
-def loadtdms(
-    file_path=r"D:\VT\Research\Test_data\apr-271\PSUDAS_UTC_20190415_033335.812.tdms",
-    first_channel=0,
-    last_channel=None,
-    first_time_sample=0,
-    last_time_sample=29999,
-    normalize="yes",
-    selectchannels="yes",
-    selectionfile=None,
-):
-    # from tdms_reader import *
-    import tdms_reader as tr
-
-    tdms = tr.TdmsReader(file_path)
-    props = tdms.get_properties()  # metadata/headers
-    # spatial dimensions
-    zero_offset = props.get("Zero Offset (m)")
-    channel_spacing = props.get("SpatialResolution[m]") * props.get(
-        "Fibre Length Multiplier"
-    )
-    n_channels = tdms.fileinfo["n_channels"]
-    distances = zero_offset + np.arange(n_channels) * channel_spacing
-    # fs = props.get('SamplingFrequency[Hz]')
-    # samplingFrequency=fs
-
-    data = tdms.get_data(
-        first_channel, last_channel, first_time_sample, last_time_sample
-    )
-    data = (
-        data.transpose()
-    )  # after transpose: rows are channels, columns are time samples
-
-    # can subselect channels that are better quality
-    if selectchannels == "yes":
-        if selectionfile == None:
-            selectionfile = r"D:\CSM\Mines_Research\\foresee_calibration.txt"
-        acon = np.loadtxt(selectionfile, dtype=float)
-        tacon = acon.transpose()
-        data = data[[int(a) for a in tacon[1]]]
-        distances = distances[[int(a) for a in tacon[1]]]
-
-    if normalize == "yes":
-        nSamples = last_time_sample - first_time_sample + 1
-        # get rid of laser drift
-        med = np.median(data, axis=0)
-        for i in range(nSamples):
-            data[:, i] = data[:, i] - med[i]
-        # L1 normalization of each channel
-        max_of_rows = abs(data).sum(axis=1)
-        data = data / (max_of_rows[:, np.newaxis])
-
-    return data, props, distances

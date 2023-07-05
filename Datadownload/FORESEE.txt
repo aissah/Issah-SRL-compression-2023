@@ -1,0 +1,3 @@
+The FORESEE-urban data from the Fiber-Optic foR Environment SEnsEing (FORESEE) project is used here. 
+
+This data can be accessed through globus. In globus collections search box, search for "PuBDAS". This collection has a directory for the FORESEE data used here.
