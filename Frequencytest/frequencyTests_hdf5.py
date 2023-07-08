@@ -18,6 +18,7 @@ Created on Tue Aug  9 10:58:46 2022
 
 @author: issah
 """
+import os
 import sys
 from datetime import datetime
 
@@ -25,13 +26,20 @@ import matplotlib.dates as mdates
 import numpy as np
 import zfpy
 
-sys.path.insert(
-    0, r"D:\CSM\Mines_Research\Summer_2022_paper\summer2022exp\Frequencytest"
-)  # ATFuncs location
-import os
+# sys.path.insert(
+#     0, r"D:\CSM\Mines_Research\Summer_2022_paper\summer2022exp\Frequencytest"
+# )  
+
 import pickle
 
-from FTFuncs import (
+try:
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/..")
+    # This line does not work when ran in an interactive IDE. Instead, make sure the 
+    # directory containing "Functions" folder is in the python path
+except NameError:
+    pass
+
+from Functions.FTFuncs import (
     loadFORESEEhdf5,
     multweigthedAverageRatio,
     plotsaveimshow,

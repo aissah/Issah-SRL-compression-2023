@@ -430,6 +430,7 @@ def get_peaks(trace, threshold=9, min_distance_btn_peaks=3000):
                     peak_locations.append(a - 1)
                     peak_dectection_significance.append(detection_significance[a - 1])
                     flag = 1
+                # if peak is with minimum distance of another peak, only take the bigger peak
                 elif peaks[-1] < trace[a - 1]:
                     peaks[-1] = trace[a - 1]
                     peak_locations[-1] = a - 1
@@ -668,11 +669,6 @@ def brady_preprocess(data):
     # med = np.mean(data, axis=0)
     for i in range(nSamples):
         data[:, i] = data[:, i] - med[i]
-
-    # mean_of_rows = np.mean(data, axis=1)
-    # max_of_rows = abs(data).sum(axis=1)
-    # max_of_rows = abs(data).max(axis=1)
-    # data = data - (mean_of_rows[:, np.newaxis])
 
     return data
 

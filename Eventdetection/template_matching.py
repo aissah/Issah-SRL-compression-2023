@@ -41,15 +41,21 @@ Created on Thu Jan  5 10:21:17 2023
 @author: issah
 """
 import os
-import pickle
 import sys
 from datetime import datetime
 
-import eventDTFuncs
 import numpy as np
+import pickle
 
 # add path that contains eventDTFuncs to scope of search
-sys.path.insert(0, "/u/st/by/aissah/scratch/summer2022exp/Eventdetection")
+try:
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/..")
+    # This line does not work when ran in an interactive IDE. Instead, make sure the 
+    # directory containing "Functions" folder is in the python path
+except NameError:
+    pass
+# sys.path.insert(0, "/u/st/by/aissah/scratch/summer2022exp/Eventdetection")
+from Functions import eventDTFuncs
 
 # compression type dict
 COMPRESSION_FUNCTIONS = {

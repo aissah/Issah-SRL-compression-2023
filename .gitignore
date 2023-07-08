@@ -1,0 +1,9 @@
+# Ipython stuff
+**/.ipynb_checkpoints
+
+# linux/osx garbage
+*~
+*.swp
+
+# compiled python
+**/__pycache__/

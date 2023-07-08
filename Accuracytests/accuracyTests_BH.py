@@ -17,12 +17,19 @@ import pickle
 import random
 import sys
 
-import ATFuncs
 import numpy as np
 
 # import random
 
-sys.path.insert(0, "/u/st/by/aissah/scratch/summer2022exp/Accuracytests")
+# sys.path.insert(0, "/u/st/by/aissah/scratch/summer2022exp/Accuracytests")
+try:
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/..")
+    # This line does not work when ran in an interactive IDE. Instead, make sure the 
+    # directory containing "Functions" folder is in the python path
+except NameError:
+    pass
+
+from Functions import ATFuncs
 
 selectionsize = int(sys.argv[1])  # number of files for this batch to analyze
 groups = int(sys.argv[2])  # number of groups

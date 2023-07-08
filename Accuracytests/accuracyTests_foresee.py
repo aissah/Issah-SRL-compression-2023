@@ -13,12 +13,20 @@ Created on Tue Aug  9 10:58:46 2022
 """
 import sys
 
-sys.path.insert(0, "/u/st/by/aissah/scratch/summer2022exp/Accuracytests")
 import os
 import pickle
 
-import ATFuncs
 import numpy as np
+
+# sys.path.insert(0, "/u/st/by/aissah/scratch/summer2022exp/Accuracytests")
+try:
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/..")
+    # This line does not work when ran in an interactive IDE. Instead, make sure the 
+    # directory containing "Functions" folder is in the python path
+except NameError:
+    pass
+
+import ATFuncs
 
 basepath = "/beegfs/projects/martin/foresee/apr10_20"  # directory containing data
 # files
@@ -69,7 +77,7 @@ for b in selection:
     if count > checkpoint:
         fname = os.path.join(basepath, files[b])
 
-        data = ATFuncs.loadFORESEEhdf5(fname, normalize="no")
+        data, _ = ATFuncs.loadFORESEEhdf5(fname, normalize="no")
 
         if len(data) % 2 == 1:
             data = data[:-1]
