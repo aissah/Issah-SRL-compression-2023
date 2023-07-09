@@ -17,7 +17,7 @@ try:
     # directory containing "Functions" folder is in the python path
 except NameError:
     pass
-from Functions import ATFuncs, basic_funcs
+from Functions import ATFuncs
 
 thresholds = list(range(5, 95, 5)) + list(range(92, 100, 2))
 

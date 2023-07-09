@@ -26,7 +26,7 @@ try:
 except NameError:
     pass
 
-import ATFuncs
+from Functions import ATFuncs, general_funcs
 
 basepath = "/beegfs/projects/martin/foresee/apr10_20"  # directory containing data
 # files
@@ -77,7 +77,7 @@ for b in selection:
     if count > checkpoint:
         fname = os.path.join(basepath, files[b])
 
-        data, _ = ATFuncs.loadFORESEEhdf5(fname, normalize="no")
+        data, _ = general_funcs.loadFORESEEhdf5(fname, normalize="no")
 
         if len(data) % 2 == 1:
             data = data[:-1]

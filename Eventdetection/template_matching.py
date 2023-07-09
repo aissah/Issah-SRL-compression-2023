@@ -25,7 +25,7 @@ compression_func : str
     The compression function exactly how it should be run. The first input 
     should be "data" and if level of compression is required by function, 
     "compression_level" should be used
-    eg: eventDTFuncs.compressReconstruct_wavelets(data, compressionFactor=compression_level)
+    eg: general_funcs.compressReconstruct_wavelets(data, compressionFactor=compression_level)
 compression_levels : int, optional
     The level(s) of compression to test. compression_levels is used as opposed
     to compression rate because some compression scheme like zfp takes precision,
@@ -55,14 +55,14 @@ try:
 except NameError:
     pass
 # sys.path.insert(0, "/u/st/by/aissah/scratch/summer2022exp/Eventdetection")
-from Functions import eventDTFuncs
+from Functions import eventDTFuncs, general_funcs
 
 # compression type dict
 COMPRESSION_FUNCTIONS = {
-    "wavelet": 'eventDTFuncs.compressReconstruct_wavelets(data,mode="2D", compressionFactor=compression_level)',
-    "wl": 'eventDTFuncs.compressReconstruct_wavelets(data,mode="2D", compressionFactor=compression_level)',
-    "zfp": 'eventDTFuncs.compressReconstruct_zfp(data,mode="precision", precision=compression_level)',
-    "svd": "eventDTFuncs.randomized_SVD_comp_decomp(data, compression_factor=compression_level)",
+    "wavelet": 'general_funcs.compressReconstruct_wavelets(data,mode="2D", compressionFactor=compression_level)',
+    "wl": 'general_funcs.compressReconstruct_wavelets(data,mode="2D", compressionFactor=compression_level)',
+    "zfp": 'general_funcs.compressReconstruct_zfp(data,mode="precision", precision=compression_level)',
+    "svd": "general_funcs.randomized_SVD_comp_decomp(data, compression_factor=compression_level)",
 }
 COMPRESSION_LEVELS = {
     "wavelet": "5,10,20,50",
@@ -119,26 +119,26 @@ save_location = "/u/st/by/aissah/scratch/event_detection/template_matching"  # "
 
 # build up collection of templates across channels
 if event_id == 2201050:
-    template, _ = eventDTFuncs.loadBradyHShdf5(
+    template, _ = general_funcs.loadBradyHShdf5(
         data_basepath + "/03_14_2016/PoroTomo_iDAS16043_160314083848.h5",
         normalize="no",
     )
     template = template[first_channel:last_channel, 17240:23240]
 elif event_id == 2201051:
-    template, _ = eventDTFuncs.loadBradyHShdf5(
+    template, _ = general_funcs.loadBradyHShdf5(
         data_basepath + "/03_14_2016/PoroTomo_iDAS16043_160314121048.h5",
         normalize="no",
     )
     template = template[first_channel:last_channel, 21730:27730]
 elif event_id == 2201052:
-    template, _ = eventDTFuncs.loadBradyHShdf5(
+    template, _ = general_funcs.loadBradyHShdf5(
         data_basepath + "/03_14_2016/PoroTomo_iDAS16043_160316220248.h5",
         normalize="no",
     )
     template = template[first_channel:last_channel, 22250:28250]
 elif event_id == "test":
     file = r"D:\CSM\Mines_Research\Test_data\Brady Hotspring\PoroTomo_iDAS16043_160314083848.h5"
-    template, _ = eventDTFuncs.loadBradyHShdf5(file, normalize="yes")
+    template, _ = general_funcs.loadBradyHShdf5(file, normalize="yes")
     template = template[first_channel:last_channel, 17240:23240]
 else:
     raise Exception("Unregistered event_id")
@@ -194,10 +194,10 @@ def _get_mean_ccs(
             )
             decompressed_template = eventDTFuncs.brady_preprocess(decompressed_template)
             decompressed_data = eventDTFuncs.brady_preprocess(decompressed_data)
-            decompressed_template = eventDTFuncs.frequency_filter(
+            decompressed_template = general_funcs.frequency_filter(
                 decompressed_template, [1, 15], "bandpass", 5, sampling_frequency
             )
-            decompressed_data = eventDTFuncs.frequency_filter(
+            decompressed_data = general_funcs.frequency_filter(
                 decompressed_data, [1, 15], "bandpass", 5, sampling_frequency
             )
 
@@ -209,7 +209,7 @@ def _get_mean_ccs(
 
             lagmax = len(decompressed_data[0]) - len(decompressed_template[0])
             # decompressed_data=decompressed_data/abs(decompressed_template).max(axis=1)[:,np.newaxis]
-            mean_cc = eventDTFuncs.crosscorrelate_channels(
+            mean_cc = general_funcs.crosscorrelate_channels(
                 decompressed_data, decompressed_template, lagmax, stacked="yes"
             )
             mean_ccs = np.append(mean_ccs, [mean_cc], axis=0)
@@ -224,14 +224,14 @@ def _get_mean_ccs(
     elif compression_flag == 0:
         # compression flag is 0 we only consider the original data
         data = eventDTFuncs.brady_preprocess(data)
-        data = eventDTFuncs.frequency_filter(
+        data = general_funcs.frequency_filter(
             data, [1, 15], "bandpass", 5, sampling_frequency
         )
         normalizer = np.max(data, axis=1)
         data = data / normalizer[:, np.newaxis]
         normalizer = np.max(template, axis=1)
         template = template / normalizer[:, np.newaxis]
-        mean_cc = eventDTFuncs.crosscorrelate_channels(
+        mean_cc = general_funcs.crosscorrelate_channels(
             data, template, lagmax, stacked="yes"
         )
         if mean_ccs_acrossfiles is None:
@@ -244,7 +244,7 @@ def _get_mean_ccs(
 
 if compression_flag == 0:
     template = eventDTFuncs.brady_preprocess(template)
-    template = eventDTFuncs.frequency_filter(
+    template = general_funcs.frequency_filter(
         template, [1, 15], "bandpass", 5, sampling_frequency
     )
     # template = template/abs(template).max(axis=1)[:,np.newaxis]
@@ -288,7 +288,7 @@ if batch == 1:
     )
     data_files = data_files[:batch_size]
     metadata["files"] = [a[-15:-3] for a in data_files]
-    data, _ = eventDTFuncs.loadBradyHShdf5(data_files[0], normalize="no")
+    data, _ = general_funcs.loadBradyHShdf5(data_files[0], normalize="no")
     data = data[first_channel:last_channel]
     # lagmax = len(data[0]) - 2 * len(template[0]) + 2 previously for some reason
     # Changed now but cannot remember the thinking behind initial the implementation
@@ -312,7 +312,7 @@ else:  # with more batches, append end of previous file for continuity
     except IndexError:
         data_files = data_files[(batch - 1) * batch_size - 1 :]
         metadata["files"] = [a[-15:-3] for a in data_files]
-    data, _ = eventDTFuncs.loadBradyHShdf5(data_files[1], normalize="no")
+    data, _ = general_funcs.loadBradyHShdf5(data_files[1], normalize="no")
     metadata["start_lag"] = (
         (batch - 1) * batch_size * len(data[0]) - len(template[0]) + 1
     )
@@ -325,7 +325,7 @@ else:  # with more batches, append end of previous file for continuity
         int(first_file_time[8:10]),
         int(first_file_time[10:]),
     )
-    preceding_data, _ = eventDTFuncs.loadBradyHShdf5(data_files[0], normalize="no")
+    preceding_data, _ = general_funcs.loadBradyHShdf5(data_files[0], normalize="no")
     data = np.append(
         preceding_data[first_channel:last_channel, -len(template[1]) + 1 :],
         data[first_channel:last_channel],
@@ -356,7 +356,7 @@ print(f"Duration: {end_time - start_time}", flush=True)
 
 for a in data_files[1:]:
     preceding_data = data[:, -len(template[1]) + 1 :]
-    data, _ = eventDTFuncs.loadBradyHShdf5(a, normalize="no")
+    data, _ = general_funcs.loadBradyHShdf5(a, normalize="no")
     data = np.append(preceding_data, data[first_channel:last_channel], axis=1)
     # lagmax = len(data[0]) - 2 * len(template[0]) + 1 previously for some reason
     # Changed now but cannot remember the thinking behind initial the implementation

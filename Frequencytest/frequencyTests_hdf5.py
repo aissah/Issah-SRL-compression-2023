@@ -39,17 +39,20 @@ try:
 except NameError:
     pass
 
-from Functions.FTFuncs import (
+from Functions.general_funcs import (
     loadFORESEEhdf5,
-    multweigthedAverageRatio,
-    plotsaveimshow,
-    plt,
     randomized_SVD_comp_decomp,
+    multweigthedAverageRatio,
     soft_comp_decomp1d,
     soft_comp_decomp2d,
     stackInWindows,
     windowedNormalisedErrors,
     windowedPowerSpectrum,
+)
+
+from Functions.FTFuncs import (
+    plotsaveimshow,
+    plt,
 )
 
 basepath = "D:\\CSM\\Mines_Research\\Test_data\\FORESEE_Aug"  # data location

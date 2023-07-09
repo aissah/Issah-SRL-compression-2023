@@ -244,37 +244,6 @@ def partition_compDecompSVD(data, compFactor, min_ncols):
     return reconstructed_data
 
 
-def normalisedErrorsSVD(data, compFactors):
-    """
-    Calculates frobenius norm of noise introduced by compression and various
-    levels of compression.
-
-    Parameters
-    ----------
-    data : 2-dimensional numpy array
-        Data to be compressed.
-    compFactors : list
-        Compression factors to evaluate norm of errors at.
-
-    Returns
-    -------
-    normalisedErrors : list
-        List of norm of errors at introduced at each level of compression.
-
-    """
-    import scipy.linalg as la
-
-    rows, columns = data.shape
-    U, S, Vt = la.svd(data)
-    datanorm = np.linalg.norm(data)
-    normalisedErrors = []
-    for cf in compFactors:
-        approxRank = int((rows * columns) / (cf * (rows + columns)))
-        sv = np.dot(np.diag(S[:approxRank]), Vt[:approxRank, :])
-        recon = np.dot(U[:, :approxRank], sv)
-        normalisedErrors.append(np.linalg.norm(data - recon) / datanorm)
-    return normalisedErrors
-
 
 def randomized_SVD_comp_decomp(data, compression_factor):
     """
@@ -305,60 +274,6 @@ def randomized_SVD_comp_decomp(data, compression_factor):
     recon = U @ np.diag(S) @ Vt
 
     return recon, compression_factor
-
-
-def normalised_errors_SVD(data, compFactors, mode="randomized"):
-    """
-    Calculates frobenius norm of noise introduced by compression and various
-    levels of compression.
-
-    Parameters
-    ----------
-    data : 2-dimensional numpy array
-        Data to be compressed. (channels by time samples)
-    compFactors : list
-        Compression factors to evaluate the norm of noise at.
-    mode : string, optional
-        randomized to indicate randomized svd or regular svd otherwise. The
-        default is "randomized".
-
-    Returns
-    -------
-    normalisedErrors : list
-        List of norm of errors at introduced at each level of compression.
-
-    """
-    import scipy.linalg as la
-    from sklearn.utils.extmath import randomized_svd
-
-    # approximate rank from dimension and desired compression factor
-    rows, columns = data.shape
-    approx_ranks = [
-        int((rows * columns) / (compFactor * (rows + columns)))
-        for compFactor in compFactors
-    ]
-
-    datanorm = np.linalg.norm(data)
-    normalisedErrors = []
-    if mode == "randomized":  # randomized approximate SVD
-        U, S, Vt = randomized_svd(data, n_components=5 + max(approx_ranks))
-        for r in approx_ranks:
-            # recon = randomized_SVD_comp_decomp(data, cf)
-            recon = U[:, :r] @ np.diag(S[:r]) @ Vt[:r, :]
-            normalisedErrors.append(np.linalg.norm(data - recon) / datanorm)
-    else:  # true low rank SVD
-        rows, columns = data.shape
-        U, S, Vt = la.svd(data)
-
-        for cf in compFactors:
-            approxRank = int((rows * columns) / (cf * (rows + columns)))
-            sv = np.dot(np.diag(S[:approxRank]), Vt[:approxRank, :])
-            recon = np.dot(U[:, :approxRank], sv)
-            normalisedErrors.append(np.linalg.norm(data - recon) / datanorm)
-    return normalisedErrors
-
-
-
 
 
 
@@ -423,91 +338,188 @@ def soft_comp_decomp2d(data_inuse, lvl=5, comp_ratio=96):
 
     return dc_data2d
 
-
-def soft_threshold(wavelet_coeffs, threshold_percentile, mode="1d"):
+def powerSpectrum(data, samplingFrequency):
     """
-    Soft thresholding operator on wavelet_coeffs.
+    Calculate the power spectrum and its frequencies for each channel of data.
 
     Parameters
     ----------
-    wavelet_coeffs : tuple
-        wavelet coefficients obtained by using pywavelets to decompose data.
-    threshold_percentile : int
-        percentile of coefficients to set to zero.
-    mode : string optional
-        2d or 1d to indicate 2d or 1d wavelet decomposition coefficients in
-        wavelet_coeffs respectively. The default is "1d".
+    data : 1 or 2-dimensional numpy array
+        Data to be analyzed for frequency content.
+    samplingFrequency : float
+        Number of samples per second for each sensor.
 
     Returns
     -------
-    thresheld_coeffs : tuple
-        Coefficients after thrsholding.
+    powerspectrum : 1 or 2-dimensional numpy array
+        Power spectrum of each channel
+    frequencies : 1-dimensional numpy array
+        Array of frequencies (in Hz) represented by power spectrum
 
     """
-    if mode == "1d":
-        if wavelet_coeffs[1].ndim == 2:
-            # threshold each level and channel separately
-            thresheld_coeffs = []
-            for level_coeffs in wavelet_coeffs:
-                thresholds = np.percentile(
-                    abs(level_coeffs), threshold_percentile, axis=1
-                )
-                thresheld_coeffs.append(
-                    np.sign(level_coeffs)
-                    * np.maximum(np.abs(level_coeffs) - thresholds[:, np.newaxis], 0)
-                )
+    dimensions = np.ndim(data)
 
-            # threshold just channels separately
-            # all_coeffs = wavelet_coeffs[0]
-            # for a in range(1, len(wavelet_coeffs)):
-            #     all_coeffs = np.append(all_coeffs, wavelet_coeffs[a], axis=1)
-            # thresholds = np.percentile(abs(all_coeffs), threshold_percentile, axis = 1)
-            # thresheld_coeffs = [np.sign(level_coeffs) * np.maximum(np.abs(level_coeffs) - thresholds[:,np.newaxis], 0) for level_coeffs in wavelet_coeffs]
-        elif wavelet_coeffs[1].ndim == 1:
-            # threshold each level and channel separately
-            thresheld_coeffs = []
-            for level_coeffs in wavelet_coeffs:
-                threshold = np.percentile(abs(level_coeffs), threshold_percentile)
-                thresheld_coeffs.append(
-                    np.sign(level_coeffs)
-                    * np.maximum(np.abs(level_coeffs) - threshold, 0)
-                )
+    fouriertransform = np.fft.rfft(data, norm="forward")
+    absfouriertransform = np.abs(fouriertransform)
+    powerspectrum = np.square(absfouriertransform)
 
-            # threshold just channels separately
-            # all_coeffs = wavelet_coeffs[0]
-            # for a in range(1, len(wavelet_coeffs)):
-            #     all_coeffs = np.append(all_coeffs, wavelet_coeffs[a])
-            # threshold = np.percentile(abs(all_coeffs), threshold_percentile)
-            # thresheld_coeffs = [np.sign(level_coeffs) * np.maximum(np.abs(level_coeffs) - threshold, 0) for level_coeffs in wavelet_coeffs]
-    elif mode == "2d":
-        if len(wavelet_coeffs[0]) == 1:
-            thresheld_coeffs = [wavelet_coeffs[0], wavelet_coeffs[1]]
-            next_level = 2
-        elif len(wavelet_coeffs[0]) == 2:
-            thresheld_coeffs = [wavelet_coeffs[0], wavelet_coeffs[1]]
-            next_level = 1
-        else:
-            threshold = np.percentile(abs(wavelet_coeffs[0]), threshold_percentile)
-            thresheld_coeffs = [
-                np.sign(wavelet_coeffs[0])
-                * np.maximum(np.abs(wavelet_coeffs[0]) - threshold, 0)
-            ]
-            next_level = 1
-        for level_coeffs in wavelet_coeffs[next_level:]:
-            threshold = np.percentile(
-                abs(np.concatenate(level_coeffs)), threshold_percentile
+    if dimensions == 1:
+        frequencies = np.linspace(0, samplingFrequency / 2, len(powerspectrum))
+    elif dimensions == 2:
+        frequencies = np.linspace(0, samplingFrequency / 2, len(powerspectrum[1]))
+
+    return powerspectrum, frequencies
+
+
+def windowedPowerSpectrum(data, samplingFrequency, windowlength=5):
+    """
+    Calculate power spectrum of a time series in "windowlength" seconds windows.
+    If the data is 2 dimensional, the second axis is taken as the time axis
+
+    Parameters
+    ----------
+    data : 1 or 2-dimensional numpy array
+        Data to be analyzed for frequency content.
+    samplingFrequency : int/float
+        Sampling frequency of time series.
+    windowlength : int/float, optional
+       Length of windows to use in seconds. The default is 5.
+
+    Returns
+    -------
+    windowedpowerspectrum : 1 or 2-dimensional numpy array
+        Power spectra of the data.
+    frequencies : 1-dimensional numpy array
+        Frequencies corresponding to the power spectra.
+
+    """
+    dimensions = np.ndim(data)
+
+    if dimensions == 1:
+        totaltime = len(data) / samplingFrequency
+        intervals = np.arange(windowlength, totaltime, windowlength, dtype=int) * int(
+            samplingFrequency
+        )  # break time series into windowed intervals
+        win_start = 0
+        win_data = data[win_start : intervals[0]]
+        powerspectrum, frequencies = powerSpectrum(win_data, samplingFrequency)
+        windowedpowerspectrum = powerspectrum[np.newaxis]
+        win_start = intervals[0]
+        for win_end in intervals[
+            1:
+        ]:  # for each interval, calculate and record its spectrum
+            win_data = data[win_start:win_end]
+            powerspectrum, _ = powerSpectrum(win_data, samplingFrequency)
+            windowedpowerspectrum = np.append(
+                windowedpowerspectrum, powerspectrum[np.newaxis], axis=0
             )
-            thresheld_level = tuple(
-                [
-                    np.sign(orient_coeffs)
-                    * np.maximum(np.abs(orient_coeffs) - threshold, 0)
-                    for orient_coeffs in level_coeffs
-                ]
+            win_start = win_end
+    elif dimensions == 2:
+        totaltime = len(data[0]) / samplingFrequency
+        intervals = np.arange(windowlength, totaltime, windowlength, dtype=int) * int(
+            samplingFrequency
+        )  # break time series into windowed intervals
+        win_start = 0
+        win_data = data[:, win_start : intervals[0]]
+        powerspectrum, frequencies = powerSpectrum(win_data, samplingFrequency)
+        windowedpowerspectrum = powerspectrum[np.newaxis]
+        win_start = intervals[0]
+        for win_end in intervals[
+            1:
+        ]:  # for each interval, calculate and record its spectrum
+            win_data = data[:, win_start:win_end]
+            powerspectrum, _ = powerSpectrum(win_data, samplingFrequency)
+            windowedpowerspectrum = np.append(
+                windowedpowerspectrum, powerspectrum[np.newaxis], axis=0
             )
-            thresheld_coeffs.append(thresheld_level)
+            win_start = win_end
 
-    return thresheld_coeffs
+    return windowedpowerspectrum, frequencies
 
+
+def weigthedAverageRatio(data1, data2):
+    """
+    Weighted average of pointwise ratio of elements in data2 to elements in data1.
+    Weights are proportions of magnitudes of the respective elements in data1.
+
+    Parameters
+    ----------
+    data1 : 2-dimensional numpy array
+        Denominators.
+    data2 : 2-dimensional numpy array
+        Numerators.
+
+    Returns
+    -------
+    weightedaverageratio : 1-dimensional numpy array
+        weighted average ratios same length as that of the first axis.
+
+    """
+    weights = data1 / np.sum(data1, axis=1)[:, np.newaxis]
+    ratios = data2 / data1
+    weightedaverageratio = np.nansum(weights * ratios, axis=1)
+
+    return weightedaverageratio
+
+
+def multweigthedAverageRatio(data1, data2, axis=1):
+    """
+    Uses weigthedAverageRatio to get the weighted average of pointwise ratio
+    of elements in data2 to elements in data1. The data here are 3-dimensional.
+    Weights are proportions of magnitudes of the respective elements in data1.
+
+    Parameters
+    ----------
+    data1 : 3-dimensional numpy array
+        Denominators.
+    data2 : 3-dimensional numpy array
+        Numerators.
+    axis : int, optional
+        Axis to average along. The default is 1.
+
+    Returns
+    -------
+    weightedaverageratio : 2-dimensional numpy array
+        weighted average ratios same shape as the other axis apart from the
+        axis in input as that of the first axis.
+
+    """
+    shape = np.shape(data1)
+    # average of ratios across all frequencies
+    if axis == 0:
+        weightedaverageratio = weigthedAverageRatio(
+            np.transpose(data1[:, :, 0]), np.transpose(data2[:, :, 0])
+        )
+        weightedaverageratios = weightedaverageratio[np.newaxis]
+        for a in range(1, shape[2]):
+            weightedaverageratio = weigthedAverageRatio(
+                np.transpose(data1[:, :, a]), np.transpose(data2[:, :, a])
+            )
+            weightedaverageratios = np.append(
+                weightedaverageratios, weightedaverageratio[np.newaxis], axis=0
+            )
+    elif axis == 1:
+        weightedaverageratio = weigthedAverageRatio(
+            np.transpose(data1[0, :, :]), np.transpose(data2[0, :, :])
+        )
+        weightedaverageratios = weightedaverageratio[np.newaxis]
+        for a in range(1, shape[0]):
+            weightedaverageratio = weigthedAverageRatio(
+                np.transpose(data1[a, :, :]), np.transpose(data2[a, :, :])
+            )
+            weightedaverageratios = np.append(
+                weightedaverageratios, weightedaverageratio[np.newaxis], axis=0
+            )
+    elif axis == 2:
+        weightedaverageratio = weigthedAverageRatio(data1[0, :, :], data2[0, :, :])
+        weightedaverageratios = weightedaverageratio[np.newaxis]
+        for a in range(1, shape[0]):
+            weightedaverageratio = weigthedAverageRatio(data1[a, :, :], data2[a, :, :])
+            weightedaverageratios = np.append(
+                weightedaverageratios, weightedaverageratio[np.newaxis], axis=0
+            )
+
+    return weightedaverageratios
 
 
 def windowedNormalisedErrors(data1, data2, samplingFrequency, windowinterval, axis=1):
@@ -587,18 +599,61 @@ def windowedNormalisedErrors(data1, data2, samplingFrequency, windowinterval, ax
     return windowednormalisederrors
 
 
+def stackInWindows(data, samplingFrequency, windowlength=5):
+    """
+    Stack/average data in windows of windowlength seconds so that length along
+    the time axis of the data is divided by 5.
 
+    Parameters
+    ----------
+    data : 1d or 2d numpy array
+        Data to be stacked.
+    samplingFrequency : int/float
+        Samples per second of the input data.
+    windowlength : int/float, optional
+        length in seconds of windows to stack data in. The default is 5.
 
+    Returns
+    -------
+    stacks : 1d or 2d numpy array
+        stacked data. Same number of dimensions as the input data with the time
+        axis length divided by 5.
 
+    """
+    dimensions = np.ndim(data)
 
+    if dimensions == 1:
+        totaltime = len(data) / samplingFrequency
+        intervals = np.arange(windowlength, totaltime, windowlength, dtype=int) * int(
+            samplingFrequency
+        )
+        win_start = 0
+        win_data = data[win_start : intervals[0]]
+        stack = np.mean(win_data, axis=1)
+        stacks = stack[:, np.newaxis]
+        win_start = intervals[0]
+        for win_end in intervals[1:]:
+            win_data = data[win_start:win_end]
+            stack = np.mean(win_data, axis=1)
+            stacks = np.append(stacks, stack[:, np.newaxis], axis=1)
+            win_start = win_end
+    elif dimensions == 2:
+        totaltime = len(data[0]) / samplingFrequency
+        intervals = np.arange(windowlength, totaltime, windowlength, dtype=int) * int(
+            samplingFrequency
+        )
+        win_start = 0
+        win_data = data[:, win_start : intervals[0]]
+        stack = np.mean(win_data, axis=1)
+        stacks = stack[:, np.newaxis]
+        win_start = intervals[0]
+        for win_end in intervals[1:]:
+            win_data = data[:, win_start:win_end]
+            stack = np.mean(win_data, axis=1)
+            stacks = np.append(stacks, stack[:, np.newaxis], axis=1)
+            win_start = win_end
 
-
-
-
-
-
-
-
+    return stacks
 
 
 def compressReconstruct_wavelets(
@@ -675,92 +730,6 @@ def compressReconstruct_wavelets(
         reconstructedData = reconstructedData[: len(data), : len(data[0])]
 
         return reconstructedData, compressionFactor
-
-
-def soft_threshold(wavelet_coeffs, threshold_percentile, mode="1d"):
-    """
-    Soft thresholding operator on wavelet_coeffs.
-
-    Parameters
-    ----------
-    wavelet_coeffs : tuple
-        wavelet coefficients obtained by using pywavelets to decompose data.
-    threshold_percentile : int
-        percentile of coefficients to set to zero.
-    mode : string optional
-        2d or 1d to indicate 2d or 1d wavelet decomposition coefficients in
-        wavelet_coeffs respectively. The default is "1d".
-
-    Returns
-    -------
-    thresheld_coeffs : tuple
-        Coefficients after thrsholding.
-
-    """
-    if mode == "1d":
-        if wavelet_coeffs[1].ndim == 2:
-            # threshold each level and channel separately
-            # thresheld_coeffs = []
-            # for level_coeffs in wavelet_coeffs:
-            #     thresholds = np.percentile(
-            #         abs(level_coeffs), threshold_percentile, axis=1
-            #     )
-            #     thresheld_coeffs.append(
-            #         np.sign(level_coeffs)
-            #         * np.maximum(np.abs(level_coeffs) - thresholds[:, np.newaxis], 0)
-            #     )
-
-            # threshold just channels separately
-            all_coeffs = wavelet_coeffs[0]
-            for a in range(1, len(wavelet_coeffs)):
-                all_coeffs = np.append(all_coeffs, wavelet_coeffs[a], axis=1)
-            thresholds = np.percentile(abs(all_coeffs), threshold_percentile, axis=1)
-            thresheld_coeffs = [
-                np.sign(level_coeffs)
-                * np.maximum(np.abs(level_coeffs) - thresholds[:, np.newaxis], 0)
-                for level_coeffs in wavelet_coeffs
-            ]
-        elif wavelet_coeffs[1].ndim == 1:
-            # threshold each level and channel separately
-            # thresheld_coeffs = []
-            # for level_coeffs in wavelet_coeffs:
-            #     threshold = np.percentile(abs(level_coeffs), threshold_percentile)
-            #     thresheld_coeffs.append(
-            #         np.sign(level_coeffs)
-            #         * np.maximum(np.abs(level_coeffs) - threshold, 0)
-            #     )
-
-            # threshold just channels separately
-            all_coeffs = wavelet_coeffs[0]
-            for a in range(1, len(wavelet_coeffs)):
-                all_coeffs = np.append(all_coeffs, wavelet_coeffs[a])
-            threshold = np.percentile(abs(all_coeffs), threshold_percentile)
-            thresheld_coeffs = [
-                np.sign(level_coeffs) * np.maximum(np.abs(level_coeffs) - threshold, 0)
-                for level_coeffs in wavelet_coeffs
-            ]
-    elif mode == "2d":
-        allcoeffs = wavelet_coeffs[0]
-        for b in wavelet_coeffs[1:]:
-            allcoeffs = np.append(allcoeffs, np.ravel(np.concatenate(b)))
-
-        threshold = np.percentile(abs(allcoeffs), threshold_percentile)
-        thresheld_coeffs = [
-            np.sign(wavelet_coeffs[0])
-            * np.maximum(np.abs(wavelet_coeffs[0]) - threshold, 0)
-        ]
-
-        for level_coeffs in wavelet_coeffs[1:]:
-            thresheld_level = tuple(
-                [
-                    np.sign(orient_coeffs)
-                    * np.maximum(np.abs(orient_coeffs) - threshold, 0)
-                    for orient_coeffs in level_coeffs
-                ]
-            )
-            thresheld_coeffs.append(thresheld_level)
-
-    return thresheld_coeffs
 
 
 def compressReconstruct_zfp(
@@ -843,9 +812,6 @@ def compressReconstruct_zfp(
         dataSize = data.nbytes
         compressionFactor = dataSize / compressedSize
         return reconstructedData, compressionFactor
-
-
-
 
 
 def crosscorrelate_channels(signal, template, lagmax, stacked="yes"):
@@ -991,19 +957,6 @@ def preprocess(data):
     data = data / (max_of_rows[:, np.newaxis])
 
     return data
-
-
-def brady_preprocess(data):
-    """Do preprocessing done in original Li and Zhan i.e. remove laser drift"""
-    nSamples = np.shape(data)[1]
-    # get rid of laser drift
-    med = np.median(data, axis=0)
-    # med = np.mean(data, axis=0)
-    for i in range(nSamples):
-        data[:, i] = data[:, i] - med[i]
-
-    return data
-
 
 
 def frequency_filter(data, frequency_range, mode, order, sampling_frequency):

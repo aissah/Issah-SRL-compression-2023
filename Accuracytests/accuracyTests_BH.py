@@ -29,7 +29,7 @@ try:
 except NameError:
     pass
 
-from Functions import ATFuncs
+from Functions import ATFuncs, general_funcs
 
 selectionsize = int(sys.argv[1])  # number of files for this batch to analyze
 groups = int(sys.argv[2])  # number of groups
@@ -91,7 +91,7 @@ for b in selection:
     if count > checkpoint:
         fname = os.path.join(data_basepath, data_files[b])
         # chosenfiles.append(files[b])
-        data, _ = ATFuncs.loadBradyHShdf5(fname, normalize="no")
+        data, _ = general_funcs.loadBradyHShdf5(fname, normalize="no")
 
         if len(data) % 2 == 1:
             data = data[:-1]
