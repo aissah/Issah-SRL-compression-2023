@@ -23,22 +23,21 @@ Created on Wed Feb  8 12:18:57 2023
 
 @author: issah
 """
+import datetime
 import os
+import pickle
 import sys
 from pathlib import Path
 
-import datetime
 import numpy as np
-import pickle
 
 try:
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/..")
-    # This line does not work when ran in an interactive IDE. Instead, make sure the 
+    # This line does not work when ran in an interactive IDE. Instead, make sure the
     # directory containing "Functions" folder is in the python path
 except NameError:
     pass
 from Functions import eventDTFuncs
-
 
 # location of files produced by runnig template_matching.py
 cc_location = Path("/u/st/by/aissah/scratch/event_detection/template_matching")

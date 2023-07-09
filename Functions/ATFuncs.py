@@ -3,13 +3,12 @@ Created on Mon Aug  8 11:40:15 2022
 
 @author: issah
 """
-import h5py
 import matplotlib.pyplot as plt
 import numpy as np
 import pywt
 import zfpy
-
 from general_funcs import soft_threshold
+
 
 def accuracyTest_zfp(data, mode):
     """
@@ -165,7 +164,6 @@ def normalisedErrorsSVD(data, compFactors):
         recon = np.dot(U[:, :approxRank], sv)
         normalisedErrors.append(np.linalg.norm(data - recon) / datanorm)
     return normalisedErrors
-
 
 
 def normalised_errors_SVD(data, compFactors, mode="randomized"):

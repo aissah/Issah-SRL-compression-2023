@@ -4,12 +4,7 @@ Created on Fri Oct  7 11:52:51 2022
 @author: issah
 """
 
-import h5py
 import numpy as np
-import pywt
-import scipy.signal as ss
-import zfpy
-
 
 
 def get_peaks(trace, threshold=9, min_distance_btn_peaks=3000):

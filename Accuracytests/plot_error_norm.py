@@ -5,15 +5,15 @@ Created on Tue Sep 27 09:36:12 2022
 @author: issah
 """
 import os
-import sys
 import pickle
+import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 try:
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/..")
-    # This line does not work when ran in an interactive IDE. Instead, make sure the 
+    # This line does not work when ran in an interactive IDE. Instead, make sure the
     # directory containing "Functions" folder is in the python path
 except NameError:
     pass

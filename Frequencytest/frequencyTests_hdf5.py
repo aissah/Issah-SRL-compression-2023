@@ -19,6 +19,7 @@ Created on Tue Aug  9 10:58:46 2022
 @author: issah
 """
 import os
+import pickle
 import sys
 from datetime import datetime
 
@@ -28,31 +29,26 @@ import zfpy
 
 # sys.path.insert(
 #     0, r"D:\CSM\Mines_Research\Summer_2022_paper\summer2022exp\Frequencytest"
-# )  
+# )
 
-import pickle
 
 try:
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/..")
-    # This line does not work when ran in an interactive IDE. Instead, make sure the 
+    # This line does not work when ran in an interactive IDE. Instead, make sure the
     # directory containing "Functions" folder is in the python path
 except NameError:
     pass
 
+from Functions.FTFuncs import plotsaveimshow, plt
 from Functions.general_funcs import (
     loadFORESEEhdf5,
-    randomized_SVD_comp_decomp,
     multweigthedAverageRatio,
+    randomized_SVD_comp_decomp,
     soft_comp_decomp1d,
     soft_comp_decomp2d,
     stackInWindows,
     windowedNormalisedErrors,
     windowedPowerSpectrum,
-)
-
-from Functions.FTFuncs import (
-    plotsaveimshow,
-    plt,
 )
 
 basepath = "D:\\CSM\\Mines_Research\\Test_data\\FORESEE_Aug"  # data location

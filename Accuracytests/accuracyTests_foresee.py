@@ -11,17 +11,16 @@ Created on Tue Aug  9 10:58:46 2022
 
 @author: issah
 """
-import sys
-
 import os
 import pickle
+import sys
 
 import numpy as np
 
 # sys.path.insert(0, "/u/st/by/aissah/scratch/summer2022exp/Accuracytests")
 try:
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/..")
-    # This line does not work when ran in an interactive IDE. Instead, make sure the 
+    # This line does not work when ran in an interactive IDE. Instead, make sure the
     # directory containing "Functions" folder is in the python path
 except NameError:
     pass

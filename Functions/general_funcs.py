@@ -3,12 +3,10 @@
 
 """
 import h5py
-import matplotlib.pyplot as plt
 import numpy as np
 import pywt
 import scipy.signal as ss
 import zfpy
-
 
 
 def loadFORESEEhdf5(file, normalize="yes"):
@@ -244,7 +242,6 @@ def partition_compDecompSVD(data, compFactor, min_ncols):
     return reconstructed_data
 
 
-
 def randomized_SVD_comp_decomp(data, compression_factor):
     """
     Compress data with randomized SVD by compression factor and return
@@ -274,9 +271,6 @@ def randomized_SVD_comp_decomp(data, compression_factor):
     recon = U @ np.diag(S) @ Vt
 
     return recon, compression_factor
-
-
-
 
 
 def soft_comp_decomp1d(data_inuse, lvl=5, comp_ratio=80):
@@ -337,6 +331,7 @@ def soft_comp_decomp2d(data_inuse, lvl=5, comp_ratio=96):
     dc_data2d = pywt.waverec2(thresheld_coeffs, "db5")
 
     return dc_data2d
+
 
 def powerSpectrum(data, samplingFrequency):
     """
