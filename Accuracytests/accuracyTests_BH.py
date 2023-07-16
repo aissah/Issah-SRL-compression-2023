@@ -63,9 +63,6 @@ selection = random.sample(range(start, end), int(selectionsize / groups))
 # selection = range(start, end)
 
 saveLocation = "/u/st/by/aissah/scratch/BradyHotspringResults/accuracyTests/"
-# errors_filename=saveLocation + 'errorsTolPrecBit1d2d_batch' + str(batch) + '.pkl'
-# compratio_filename=saveLocation + 'compfactsTolPrecBit_batch' + str(batch) + '.pkl'
-# chosenfiles_savename=saveLocation + 'chosenfiles_batch' + str(batch) + '.pkl'
 checkpointFilename = (
     "/u/st/by/aissah/scratch/summer2022exp/Accuracytests/checkpoints/checkpoint"
     + str(batch)
