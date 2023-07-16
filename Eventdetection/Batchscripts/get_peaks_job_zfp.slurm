@@ -13,4 +13,4 @@ source activate ny_env
 
 # python /u/st/by/aissah/scratch/summer2022exp/Eventdetection/makeplots.py 2201050 zfp
 
-python /u/st/by/aissah/scratch/summer2022exp/Eventdetection/makeplots_clusters.py 2201050 zfp
+python %~dp0../Eventdetection/makeplots_clusters.py 2201050 zfp

@@ -11,6 +11,6 @@ source activate ny_env
 
 #python /u/st/by/aissah/scratch/summer2022exp/Eventdetection/peaks_and_detection_significance.py 2201050 wl 9
 
-python /u/st/by/aissah/scratch/summer2022exp/Eventdetection/makeplots.py 2201050 wl
+python %~dp0../Eventdetection/makeplots.py 2201050 wl
 
-python /u/st/by/aissah/scratch/summer2022exp/Eventdetection/makeplots_clusters.py 2201050 wl
+python %~dp0../Eventdetection/makeplots_clusters.py 2201050 wl

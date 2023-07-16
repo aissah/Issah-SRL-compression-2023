@@ -12,7 +12,7 @@ source activate ny_env
 for i in {1..4}
 do
 # python /u/st/by/aissah/scratch/summer2022exp/Accuracytests/accuracyTests_forsee.py selection_size number_of_groups "$i"(batch number) compresssion_type(wavelet, zfp, svd) checkpoint_flag(1=from beginning, 2=start from checkpoint)
-srun --exclusive --ntasks=1 python /u/st/by/aissah/scratch/summer2022exp/Accuracytests/accuracyTests_forsee.py 2400 4 "$i" wavelet 1 &
+srun --exclusive --ntasks=1 python %~dp0../accuracyTests_forsee.py 2400 4 "$i" wavelet 1 &
 done
 wait
 echo "end of run"
