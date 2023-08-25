@@ -1,4 +1,5 @@
 # Issah-SRL-compression-2023
+[![DOI](https://zenodo.org/badge/505936568.svg)](https://zenodo.org/badge/latestdoi/505936568)
 
 ## Overview
 
